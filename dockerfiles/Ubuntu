@@ -1,0 +1,52 @@
+ARG OS_VERSION=22.04
+
+FROM ubuntu:${OS_VERSION}
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies.
+RUN apt-get update \
+   && apt-get install -y --no-install-recommends \
+      apt-transport-https \
+      bash \
+      gnupg \
+      ca-certificates \
+      curl \
+      cron \
+      dnsmasq \
+      iproute2 \
+      locales \
+      lsb-release \
+      procps \
+      python3-minimal \
+      python3-apt \
+      python3-pip \
+      python3-setuptools \
+      python3-simplejson \
+      rsyslog \
+      sudo \
+      systemd \
+      systemd-sysv \
+      tar \
+      unzip \
+      wget \
+      xz-utils \
+      zip \
+   && apt-get clean \
+   && rm -Rf /var/lib/apt/lists/* \
+   && rm -Rf /usr/share/doc && find /usr/share/man -type f -delete \
+   && rm -rf /tmp/* /var/tmp/* ; \
+      rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
+      rm -rf /etc/systemd/system/*.wants/* ; \
+      rm -rf /lib/systemd/system/local-fs.target.wants/* ; \
+      rm -rf /lib/systemd/system/sockets.target.wants/*udev* ; \
+      rm -rf /lib/systemd/system/sockets.target.wants/*initctl* ; \
+      rm -rf /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* ; \
+      rm -rf /lib/systemd/system/systemd-update-utmp* ; \
+      rm -rf /lib/systemd/system/getty.target
+
+# Fix potential UTF-8 errors with ansible-test.
+RUN locale-gen en_US.UTF-8
+
+VOLUME ["/sys/fs/cgroup", "/tmp", "/run"]
+CMD ["/lib/systemd/systemd"]

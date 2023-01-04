@@ -1,0 +1,5 @@
+FROM alpine:latest
+
+RUN apk --no-cache add bash curl ansible-lint black py3-jsonschema shellcheck yamllint
+
+CMD ["/bin/bash"]
