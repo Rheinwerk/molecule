@@ -76,7 +76,7 @@ runs:
         TEST_TYPE: "${{ inputs.test_type }}"
 
     - name: Install test dependencies
-      run: pip install 'ansible${{ inputs.ansible_version }}' molecule[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible${{ inputs.ansible_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Pip list
