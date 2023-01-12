@@ -1,0 +1,101 @@
+---
+name: Ansible Molecule
+description: Run Ansible Molecule
+author: Michael Schmitz
+
+inputs:
+  ansible_version:
+    description: Ansible version to use, leave empty for newest
+    default: ''
+  distro:
+    description: 'Execute tests against distribution'
+    default: 'ubuntu-20.04'
+  python_version:
+    description: Python version to use
+    default: '3.x'
+  jinja2_version:
+    description: Jinaj2 version to use
+    default: ''
+  scenario:
+    description: 'Support scenarios: docker'
+    default: 'docker'
+  test_type:
+    description: 'Choose between: unit'
+    default: 'unit'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+
+    - name: Check out the molecule repository
+      uses: actions/checkout@v3
+      with:
+        repository: Rheinwerk/molecule
+        path: 'git_molecule'
+
+    - name: Set up Python 3
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
+    - name: Uninstall preinstalled software
+      run: sudo apt-get purge -y ansible python3-jinja2
+      shell: bash
+
+    - name: Set CI_HOSTNAME
+      run: echo "CI_HOSTNAME=$(echo $MOLECULE_DISTRO | tr -dc '[:alnum:]\n\r' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      shell: bash
+      env:
+        MOLECULE_DISTRO: "${{ inputs.distro }}"
+
+    - name: Set CI_PROJECT_NAME_MOLECULE
+      run: echo "CI_PROJECT_NAME_MOLECULE=$(echo $GITHUB_REPOSITORY_OWNER | tr '_' '-')" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Prepare Molecule Scenario
+      run: |
+        mkdir -p ${GITHUB_WORKSPACE}/molecule/default
+        rsync -avzh --ignore-existing --ignore-errors git_molecule/scenarios/$MOLECULE_SCENARIO_NAME/ ${GITHUB_WORKSPACE}/molecule/default/
+      shell: bash
+      env:
+        MOLECULE_SCENARIO_NAME: "${{ inputs.scenario }}"
+
+    - name: Update Molecule inventory if tests directory does not exist
+      run: if [[ "$TEST_TYPE" == "unit" || "$TEST_TYPE" == "destroy" ]] && [[ ! -f "${GITHUB_WORKSPACE}/tests/vars.yml" ]]; then yq -i 'del(.provisioner.inventory)' ${GITHUB_WORKSPACE}/molecule/default/molecule.yml; fi
+      shell: bash
+      env:
+        TEST_TYPE: "${{ inputs.test_type }}"
+
+    - name: Sync test vars to group_vars when exists
+      run: if [[ "$TEST_TYPE" == "unit" || "$TEST_TYPE" == "destroy" ]] && [[ -f "${GITHUB_WORKSPACE}/tests/vars.yml" ]]; then mkdir -p ${GITHUB_WORKSPACE}/group_vars/all/ && rsync -aP ${GITHUB_WORKSPACE}/tests/ ${GITHUB_WORKSPACE}/group_vars/all/; fi
+      shell: bash
+      env:
+        TEST_TYPE: "${{ inputs.test_type }}"
+
+    - name: Install test dependencies
+      run: pip install 'ansible${{ inputs.ansible_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      shell: bash
+
+    - name: Pip list
+      run: pip list
+      shell: bash
+
+    - name: Print molecule version infos
+      run: molecule --version
+      shell: bash
+
+    - name: Run Molecule tests
+      run: molecule test
+      shell: bash
+      env:
+        ANSIBLE_FORCE_COLOR: '1'
+        ANSIBLE_VERBOSITY: '2'
+        CI_JOB_ID: "${{ github.run_id }}"
+        MOLECULE_DEBUG: '1'
+        MOLECULE_DISTRO: "${{ inputs.distro }}"
+        MOLECULE_SCENARIO_NAME: "${{ inputs.scenario }}"
+        PY_COLORS: '1'
+        TEST_TYPE: "${{ inputs.test_type }}"

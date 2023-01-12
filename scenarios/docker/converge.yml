@@ -1,0 +1,23 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    ansible_user: "{{ ssh_remote_user | default('root') }}"
+    ansible_python_interpreter: /usr/bin/python3
+
+  pre_tasks:
+    - name: update APT Cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 600
+      register: result
+      until: result is succeeded
+      when: ansible_os_family == 'Debian'
+      tags:
+        - molecule-idempotence-notest
+
+  tasks:
+    - name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
