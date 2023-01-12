@@ -21,13 +21,14 @@ env:
 
 jobs:
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         include:
           - dockerfile: dockerfiles/Lint
             image: ghcr.io/rheinwerk/molecule:lint
+            build-args: "OS_VERSION=3.17"
           - dockerfile: dockerfiles/Ubuntu
             image: ghcr.io/rheinwerk/molecule:ubuntu-20.04
             build-args: "OS_VERSION=20.04"
