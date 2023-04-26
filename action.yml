@@ -7,9 +7,15 @@ inputs:
   ansible_version:
     description: Ansible version to use, leave empty for newest
     default: ''
+  ansible_compat_version:
+    description: ansible-compat version to use, leave empty for newest
+    default: ''
   distro:
     description: 'Execute tests against distribution'
     default: 'ubuntu-20.04'
+  molecule_version:
+    description: Molecule version to use, leave empty for newest
+    default: ''
   python_version:
     description: Python version to use
     default: '3.x'
@@ -75,8 +81,14 @@ runs:
       env:
         TEST_TYPE: "${{ inputs.test_type }}"
 
+    - name: Install test dependencies for older molecule versions
+      if: "${{ inputs.molecule_version != '' }}"
+      run: pip install 'ansible-compat${{ inputs.ansible_compat_version }}' 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      shell: bash
+
     - name: Install test dependencies
-      run: pip install 'ansible${{ inputs.ansible_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      if: "${{ inputs.molecule_version == '' }}"
+      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Pip list
