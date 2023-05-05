@@ -83,12 +83,13 @@ runs:
 
     - name: Install test dependencies for older molecule versions
       if: "${{ inputs.molecule_version != '' }}"
-      run: pip install 'ansible-compat${{ inputs.ansible_compat_version }}' 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible-compat${{ inputs.ansible_compat_version }}' 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}' 'urllib3<2'
       shell: bash
 
     - name: Install test dependencies
       if: "${{ inputs.molecule_version == '' }}"
-      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}' 'urllib3<2'
+
       shell: bash
 
     - name: Pip list
