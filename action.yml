@@ -115,13 +115,17 @@ runs:
       run: pip list
       shell: bash
 
+    - name: Install collections from collections.yml
+      if: "${{ inputs.ansible_scenario != '' }}"
+      run: ansible-galaxy install -r git_molecule/requirements/collections_${{ inputs.ansible_scenario }}.yml
+      shell: bash
+
     - name: Print molecule version infos
       run: molecule --version
       shell: bash
 
-    - name: Install collections from collections.yml
-      if: "${{ inputs.ansible_scenario != '' }}"
-      run: ansible-galaxy install -r git_molecule/requirements/collections_${{ inputs.ansible_scenario }}.yml
+    - name: Print installed ansible collections
+      run: ansible-galaxy collection list
       shell: bash
 
     - name: Run Molecule tests
