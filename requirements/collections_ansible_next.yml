@@ -1,0 +1,25 @@
+---
+collections:
+  - name: ansible.posix
+  - name: community.crypto
+  - name: community.rabbitmq
+  # Use amazon.aws 4.x.y if you are using Ansible 2.9 or Ansible Core 2.10.
+  # At least 1.5.0 for 'purge_tags' support / https://github.com/ansible-collections/amazon.aws/issues/229
+  - name: amazon.aws
+    version: 4.4.0
+  # Use community.aws 4.x.y if you are using Ansible 2.9 or Ansible Core 2.10.
+  # community.aws:=4.5.0 needs amazon.aws:=4.4.0  - name: amazon.aws
+  - name: community.aws
+    version: 4.5.0
+  # Please note that Ansible 2.9 and ansible-base 2.10 are no longer supported. If you need to use them, use community.docker 2.x.y
+  - name: community.docker
+    version: 2.7.5
+  # Please use community.general 4.x.y with Ansible 2.9 and ansible-base 2.10
+  - name: community.general
+    version: 4.8.11
+  # latest Version tested against MongoDB < 4.4
+  - name: community.mongodb
+    version: 1.2.1
+  # https://github.com/ansible-collections/community.postgresql/blob/stable-1/CHANGELOG.rst#v173
+  - name: community.postgresql
+    version: 1.7.2
