@@ -119,7 +119,7 @@ runs:
       shell: bash
 
     - name: Install collections from collections.yml
-      if: "${{ inputs.scenario != '' }}"
+      if: "${{ inputs.ansible_scenario != '' }}"
       run: ansible-galaxy install -r git_molecule/requirements/collections_${{ inputs.ansible_scenario }}.yml
       shell: bash
 
