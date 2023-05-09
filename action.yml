@@ -4,15 +4,24 @@ description: Run Ansible Molecule
 author: Michael Schmitz
 
 inputs:
+  ansible_current_version:
+    description: Ansible version to use for 'ansible_current' scenario
+    default: '==2.10.7'
+  ansible_next_version:
+    description: Ansible version to use for 'ansible_next' scenario
+    default: '==3'
+  ansible_scenario:
+    description: 'Predefined ansible versions: ansible_current, ansible_next, ansible_latest'
+    default: ''
   ansible_version:
     description: Ansible version to use, leave empty for newest
-    default: ''
-  ansible_compat_version:
-    description: ansible-compat version to use, leave empty for newest
     default: ''
   distro:
     description: 'Execute tests against distribution'
     default: 'ubuntu-20.04'
+  molecule_scenario:
+    description: Molecule scenario for testing
+    default: 'docker'
   molecule_version:
     description: Molecule version to use, leave empty for newest
     default: ''
@@ -22,9 +31,6 @@ inputs:
   jinja2_version:
     description: Jinaj2 version to use
     default: ''
-  scenario:
-    description: 'Support scenarios: docker'
-    default: 'docker'
   test_type:
     description: 'Choose between: unit'
     default: 'unit'
@@ -67,7 +73,7 @@ runs:
         rsync -avzh --ignore-existing --ignore-errors git_molecule/scenarios/$MOLECULE_SCENARIO_NAME/ ${GITHUB_WORKSPACE}/molecule/default/
       shell: bash
       env:
-        MOLECULE_SCENARIO_NAME: "${{ inputs.scenario }}"
+        MOLECULE_SCENARIO_NAME: "${{ inputs.molecule_scenario }}"
 
     - name: Update Molecule inventory if tests directory does not exist
       run: if [[ "$TEST_TYPE" == "unit" || "$TEST_TYPE" == "destroy" ]] && [[ ! -f "${GITHUB_WORKSPACE}/tests/vars.yml" ]]; then yq -i 'del(.provisioner.inventory)' ${GITHUB_WORKSPACE}/molecule/default/molecule.yml; fi
@@ -81,14 +87,27 @@ runs:
       env:
         TEST_TYPE: "${{ inputs.test_type }}"
 
-    - name: Install test dependencies for older molecule versions
-      if: "${{ inputs.molecule_version != '' }}"
-      run: pip install 'ansible-compat${{ inputs.ansible_compat_version }}' 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+    # PINs:
+    # - urllib3<2 https://github.com/docker/docker-py/issues/3113
+
+    - name: Install software for 'ansible current' scenario
+      if: "${{ inputs.ansible_scenario == 'ansible_current' }}"
+      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_current_version }}' 'molecule<5' molecule[docker] docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
       shell: bash
 
-    - name: Install test dependencies
-      if: "${{ inputs.molecule_version == '' }}"
-      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+    - name: Install software for 'ansible next' scenario
+      if: "${{ inputs.ansible_scenario == 'ansible_next' }}"
+      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_next_version }}' 'molecule<5' molecule[docker] docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
+      shell: bash
+
+    - name: Install software for 'ansible latest' scenario
+      if: "${{ inputs.ansible_scenario == 'ansible_latest' }}"
+      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}' 'urllib3<2'
+      shell: bash
+
+    - name: Install software for generic use case
+      if: "${{ inputs.ansible_scenario == '' }}"
+      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}' 'urllib3<2'
       shell: bash
 
     - name: Pip list
@@ -97,6 +116,11 @@ runs:
 
     - name: Print molecule version infos
       run: molecule --version
+      shell: bash
+
+    - name: Install collections from collections.yml
+      if: "${{ inputs.scenario != '' }}"
+      run: ansible-galaxy install -r git_molecule/requirements/collections_${{ inputs.ansible_scenario }}.yml
       shell: bash
 
     - name: Run Molecule tests
@@ -108,6 +132,6 @@ runs:
         CI_JOB_ID: "${{ github.run_id }}"
         MOLECULE_DEBUG: '1'
         MOLECULE_DISTRO: "${{ inputs.distro }}"
-        MOLECULE_SCENARIO_NAME: "${{ inputs.scenario }}"
+        MOLECULE_SCENARIO_NAME: "${{ inputs.molecule_scenario }}"
         PY_COLORS: '1'
         TEST_TYPE: "${{ inputs.test_type }}"
