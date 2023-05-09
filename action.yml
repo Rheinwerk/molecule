@@ -89,15 +89,16 @@ runs:
 
     # PINs:
     # - urllib3<2 https://github.com/docker/docker-py/issues/3113
+    # - molecule-docker==1.1.0 für ansible-core < 2.12 versionen: https://github.com/ansible-community/molecule-docker/pull/156
 
     - name: Install software for 'ansible current' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_current' }}"
-      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_current_version }}' 'molecule<5' molecule[docker] docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
+      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_current_version }}' 'molecule<5' 'molecule-docker==1.1.0' docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
       shell: bash
 
     - name: Install software for 'ansible next' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_next' }}"
-      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_next_version }}' 'molecule<5' molecule[docker] docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
+      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_next_version }}' 'molecule<5' 'molecule-docker==1.1.0' docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
       shell: bash
 
     - name: Install software for 'ansible latest' scenario
