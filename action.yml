@@ -46,6 +46,7 @@ runs:
       with:
         repository: Rheinwerk/molecule
         path: 'git_molecule'
+        ref: v1
 
     - name: Set up Python 3
       uses: actions/setup-python@v4
@@ -75,14 +76,8 @@ runs:
       env:
         MOLECULE_SCENARIO_NAME: "${{ inputs.molecule_scenario }}"
 
-    - name: Update Molecule inventory if tests directory does not exist
-      run: if [[ "$TEST_TYPE" == "unit" || "$TEST_TYPE" == "destroy" ]] && [[ ! -f "${GITHUB_WORKSPACE}/tests/vars.yml" ]]; then yq -i 'del(.provisioner.inventory)' ${GITHUB_WORKSPACE}/molecule/default/molecule.yml; fi
-      shell: bash
-      env:
-        TEST_TYPE: "${{ inputs.test_type }}"
-
-    - name: Sync test vars to group_vars when exists
-      run: if [[ "$TEST_TYPE" == "unit" || "$TEST_TYPE" == "destroy" ]] && [[ -f "${GITHUB_WORKSPACE}/tests/vars.yml" ]]; then mkdir -p ${GITHUB_WORKSPACE}/group_vars/all/ && rsync -aP ${GITHUB_WORKSPACE}/tests/ ${GITHUB_WORKSPACE}/group_vars/all/; fi
+    - name: Sync test vars
+      run: if [[ "$TEST_TYPE" == "unit" ]] && [[ -f "${GITHUB_WORKSPACE}/tests/vars.yml" ]]; then mkdir -p ${GITHUB_WORKSPACE}/molecule/default/group_vars/all/ && rsync -aP ${GITHUB_WORKSPACE}/tests/vars.yml ${GITHUB_WORKSPACE}/molecule/default/group_vars/all/test_vars.yml; fi
       shell: bash
       env:
         TEST_TYPE: "${{ inputs.test_type }}"

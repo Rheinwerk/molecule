@@ -26,9 +26,6 @@ provisioner:
       stdout_callback: yaml
     diff:
       always: true
-  inventory:
-    links:
-      group_vars: ${GITHUB_WORKSPACE}/group_vars/
   playbooks:
     converge: ${MOLECULE_CONVERGE_PLAYBOOK:-converge.yml}
   log: True
