@@ -30,6 +30,13 @@ Upstream Ubuntu 20.04 / 22.04 Docker Container with following extensions:
 ## CI Workflow
 To use this action in your repo you can create a new Github Workflow with the example [molecule.yml](examples/molecule.yml)
 
+This will test your role against the following Ansible Scenarios:
+- `ansible_current`
+- `ansible_next`
+- `ansible_latest`
+
+Used Ansible Version for these scenarios are defined in [action.yml](examples/action.yml), but can be overridden. Leave `ansible_scenario` unset for simple tests against latest ansible and molecule version. 
+
 # Configuration
 ## Only Lint, no Molecule Tests
 
@@ -83,8 +90,8 @@ If you want to include tests which are not mandatory, mark them as `experimental
   become: true
 
   pre_tasks:
-    - name: update APT Cache
-      apt:
+    - name: Update APT Cache
+      ansible.builtin.apt:
         update_cache: yes
         cache_valid_time: 600
       register: result
@@ -93,13 +100,13 @@ If you want to include tests which are not mandatory, mark them as `experimental
 
     # skip idempotence tests
     - name: Include Example install role
-      include_role:
+      ansible.builtin.include_role:
         name: example
       when: "'molecule-idempotence-notest' not in ansible_skip_tags"
 
   tasks:
     - name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
-      include_role:
+      ansible.builtin.include_role:
         name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
 ```
 
@@ -121,8 +128,8 @@ Create `molecule/default/converge.yml` inside the repository with following cont
   become: true
 
   pre_tasks:
-    - name: update APT Cache
-      apt:
+    - name: Update APT Cache
+      ansible.builtin.apt:
         update_cache: yes
         cache_valid_time: 600
       register: result
@@ -132,7 +139,7 @@ Create `molecule/default/converge.yml` inside the repository with following cont
   tasks:
     # skip idempotence tests
     - name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
-      include_role:
+      ansible.builtin.include_role:
         name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
       tags:
         - molecule-idempotence-notest
@@ -145,7 +152,7 @@ Tag the task with `molecule-idempotence-notest`:
 ```yaml
 # skip idempotence tests
 - name: Not idempotent task
-  command: "echo not-idempotent"
+  ansible.builtin.command: "echo not-idempotent"
   tags:
     - molecule-idempotence-notest
 ```
@@ -161,7 +168,7 @@ Create `molecule/default/converge.yml` inside the repository with following cont
   tasks:
     # skip idempotence tests
     - name: Include Example install role
-      include_role:
+      ansible.builtin.include_role:
         name: example
       when: "'molecule-idempotence-notest' not in ansible_skip_tags"
 ...
