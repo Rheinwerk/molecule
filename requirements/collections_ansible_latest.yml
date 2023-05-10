@@ -8,4 +8,5 @@ collections:
   - name: community.docker
   - name: community.general
   - name: community.mongodb
+  - name: community.mysql
   - name: community.postgresql
