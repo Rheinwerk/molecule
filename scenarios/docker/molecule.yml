@@ -6,12 +6,19 @@ driver:
 platforms:
   - name: ${CI_HOSTNAME}-${CI_PROJECT_NAME_MOLECULE}-${CI_JOB_ID}
     image: ghcr.io/rheinwerk/molecule:${MOLECULE_DISTRO}
-    command: ${MOLECULE_DOCKER_COMMAND:-"/lib/systemd/systemd"}
     pre_build_image: true
     privileged: true
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
-    cgroupns_mode: host
+    cgroup_parent: docker.slice
+    cgroupns_mode: private
+    override_command: false
+    capabilities:
+      - SYS_ADMIN
+    security_opts:
+      - seccomp=unconfined
+    tmpfs:
+      - /run
+      - /tmp
+      - /run/lock
 provisioner:
   name: ansible
   config_options:
