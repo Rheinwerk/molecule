@@ -1,6 +1,8 @@
 ---
 collections:
+  - name: ansible.netcommon
   - name: ansible.posix
+  - name: ansible.utils
   - name: community.crypto
   - name: community.rabbitmq
   # Use amazon.aws 4.x.y if you are using Ansible 2.9 or Ansible Core 2.10.
@@ -20,6 +22,9 @@ collections:
   # latest Version tested against MongoDB < 4.4
   - name: community.mongodb
     version: 1.2.1
+  # https://github.com/ansible-collections/community.mysql/pull/347
+  - name: community.mysql
+    version: 1.4.4
   # https://github.com/ansible-collections/community.postgresql/blob/stable-1/CHANGELOG.rst#v173
   - name: community.postgresql
     version: 1.7.2

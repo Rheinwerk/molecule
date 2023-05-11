@@ -1,6 +1,8 @@
 ---
 collections:
+  - name: ansible.netcommon
   - name: ansible.posix
+  - name: ansible.utils
   - name: community.crypto
   - name: community.rabbitmq
   - name: amazon.aws
@@ -8,4 +10,5 @@ collections:
   - name: community.docker
   - name: community.general
   - name: community.mongodb
+  - name: community.mysql
   - name: community.postgresql
