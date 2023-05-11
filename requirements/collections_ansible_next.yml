@@ -1,6 +1,8 @@
 ---
 collections:
+  - name: ansible.netcommon
   - name: ansible.posix
+  - name: ansible.utils
   - name: community.crypto
   - name: community.rabbitmq
   # Use amazon.aws 4.x.y if you are using Ansible 2.9 or Ansible Core 2.10.
