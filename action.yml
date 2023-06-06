@@ -6,10 +6,10 @@ author: Michael Schmitz
 inputs:
   ansible_current_version:
     description: Ansible version to use for 'ansible_current' scenario
-    default: '==2.10.7'
+    default: '==2.13.*'
   ansible_next_version:
     description: Ansible version to use for 'ansible_next' scenario
-    default: '==3'
+    default: '==2.14.*'
   ansible_scenario:
     description: 'Predefined ansible versions: ansible_current, ansible_next, ansible_latest'
     default: ''
@@ -28,8 +28,11 @@ inputs:
   python_version:
     description: Python version to use
     default: '3.x'
+  jinja2_current_version:
+    description: Jinaj2 version to use for 'ansible_current' scenario
+    default: '==3.1.2'
   jinja2_version:
-    description: Jinaj2 version to use
+    description: Jinaj2 version to use, leave empty for newest
     default: ''
   test_type:
     description: 'Choose between: unit'
@@ -82,28 +85,24 @@ runs:
       env:
         TEST_TYPE: "${{ inputs.test_type }}"
 
-    # PINs:
-    # - urllib3<2 https://github.com/docker/docker-py/issues/3113
-    # - molecule-docker==1.1.0 für ansible-core < 2.12 versionen: https://github.com/ansible-community/molecule-docker/pull/156
-
     - name: Install software for 'ansible_current' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_current' }}"
-      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_current_version }}' 'molecule<5' 'molecule-docker==1.1.0' docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
+      run: pip install 'ansible-core${{ inputs.ansible_current_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_current_version }}'
       shell: bash
 
     - name: Install software for 'ansible_next' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_next' }}"
-      run: pip install 'ansible-compat<3' 'ansible${{ inputs.ansible_next_version }}' 'molecule<5' 'molecule-docker==1.1.0' docker netaddr jmespath dnspython 'Jinja2<3.1' 'urllib3<2'
+      run: pip install 'ansible-core${{ inputs.ansible_next_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Install software for 'ansible_latest' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_latest' }}"
-      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}' 'urllib3<2'
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Install software for generic use case
       if: "${{ inputs.ansible_scenario == '' }}"
-      run: pip install 'ansible${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}' 'urllib3<2'
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Pip list
