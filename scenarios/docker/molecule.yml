@@ -31,6 +31,7 @@ provisioner:
       host_key_checking: false
       remote_tmp: '/tmp/.ansible-${USER}/tmp'
       stdout_callback: yaml
+      roles_path: roles-lib
     diff:
       always: true
   playbooks:
