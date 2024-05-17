@@ -55,7 +55,7 @@ jobs:
 
       - name: Build and push
         id: docker_build
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -63,3 +63,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ matrix.image }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
