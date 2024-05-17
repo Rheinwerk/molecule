@@ -9,12 +9,12 @@ inputs:
     default: '==2.13.*'
   ansible_next_version:
     description: Ansible version to use for 'ansible_next' scenario
-    default: '==2.14.*'
-  ansible_scenario:
-    description: 'Predefined ansible versions: ansible_current, ansible_next, ansible_latest'
-    default: ''
+    default: '==2.16.*'
   ansible_version:
     description: Ansible version to use, leave empty for newest
+    default: ''
+  ansible_scenario:
+    description: 'Predefined ansible versions: ansible_current, ansible_next, ansible_latest'
     default: ''
   distro:
     description: 'Execute tests against distribution'
@@ -27,10 +27,10 @@ inputs:
     default: ''
   python_version:
     description: Python version to use
-    default: '3.x'
+    default: '3.12'
   jinja2_current_version:
     description: Jinaj2 version to use for 'ansible_current' scenario
-    default: '==3.1.2'
+    default: ''
   jinja2_version:
     description: Jinaj2 version to use, leave empty for newest
     default: ''
@@ -42,23 +42,27 @@ runs:
   using: "composite"
   steps:
     - name: Check out the codebase
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Check out the molecule repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: Rheinwerk/molecule
         path: 'git_molecule'
-        ref: v1
+        ref: v2
 
     - name: Set up Python 3
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python_version }}
 
-    # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
-    - name: Uninstall preinstalled software
-      run: sudo apt-get purge -y ansible python3-jinja2
+    - name: Setup and activate virtualenv
+      run: |
+        pip install --upgrade pip
+        python${{ inputs.python_version }} -m venv env
+        source env/bin/activate
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
       shell: bash
 
     - name: Set CI_HOSTNAME
