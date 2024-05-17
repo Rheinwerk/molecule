@@ -9,12 +9,12 @@ inputs:
     default: '==2.13.*'
   ansible_next_version:
     description: Ansible version to use for 'ansible_next' scenario
-    default: '==2.14.*'
-  ansible_scenario:
-    description: 'Predefined ansible versions: ansible_current, ansible_next, ansible_latest'
-    default: ''
+    default: '==2.16.*'
   ansible_version:
     description: Ansible version to use, leave empty for newest
+    default: ''
+  ansible_scenario:
+    description: 'Predefined ansible versions: ansible_current, ansible_next, ansible_latest'
     default: ''
   distro:
     description: 'Execute tests against distribution'
@@ -30,7 +30,7 @@ inputs:
     default: '3.12'
   jinja2_current_version:
     description: Jinaj2 version to use for 'ansible_current' scenario
-    default: '==3.1.2'
+    default: ''
   jinja2_version:
     description: Jinaj2 version to use, leave empty for newest
     default: ''
@@ -49,7 +49,7 @@ runs:
       with:
         repository: Rheinwerk/molecule
         path: 'git_molecule'
-        ref: v1
+        ref: v2
 
     - name: Set up Python 3
       uses: actions/setup-python@v5
