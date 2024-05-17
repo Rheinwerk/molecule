@@ -27,7 +27,7 @@ inputs:
     default: ''
   python_version:
     description: Python version to use
-    default: '3.x'
+    default: '3.12'
   jinja2_current_version:
     description: Jinaj2 version to use for 'ansible_current' scenario
     default: '==3.1.2'
@@ -56,9 +56,13 @@ runs:
       with:
         python-version: ${{ inputs.python_version }}
 
-    # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md
-    - name: Uninstall preinstalled software
-      run: sudo apt-get purge -y ansible python3-jinja2
+    - name: Setup and activate virtualenv
+      run: |
+        pip install --upgrade pip
+        python${{ inputs.python_version }} -m venv env
+        source env/bin/activate
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
       shell: bash
 
     - name: Set CI_HOSTNAME
