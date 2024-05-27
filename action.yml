@@ -36,8 +36,7 @@ inputs:
     default: ''
   requests_version:
     description: Requests version to use, leave empty for newest
-    # https://github.com/psf/requests/issues/6707
-    default: '<2.32.0'
+    default: ''
   test_type:
     description: 'Choose between: unit'
     default: 'unit'
