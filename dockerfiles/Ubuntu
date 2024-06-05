@@ -45,6 +45,11 @@ RUN apt-get update \
       rm -rf /lib/systemd/system/systemd-update-utmp* ; \
       rm -rf /lib/systemd/system/getty.target
 
+# Install Python 3.12
+RUN   add-apt-repository ppa:deadsnakes/ppa \
+      && apt-get update \
+      && apt install python3.12
+
 # Fix potential UTF-8 errors with ansible-test.
 RUN locale-gen en_US.UTF-8
 
