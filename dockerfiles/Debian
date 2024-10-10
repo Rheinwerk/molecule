@@ -1,0 +1,66 @@
+ARG OS_VERSION=stable
+
+FROM --platform=$BUILDPLATFORM debian:${OS_VERSION}
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies.
+RUN apt-get update \
+   && apt-get install -y --no-install-recommends \
+      apt-transport-https \
+      bash \
+      gnupg \
+      ca-certificates \
+      curl \
+      cron \
+      dnsmasq \
+      iproute2 \
+      locales \
+      lsb-release \
+      procps \
+      python3-minimal \
+      python3-apt \
+      python3-pip \
+      python3-setuptools \
+      python3-simplejson \
+      python3-debian \
+      rsyslog \
+      software-properties-common \
+      sudo \
+      systemd \
+      systemd-sysv \
+      tar \
+      unzip \
+      wget \
+      xz-utils \
+      zip \
+   && apt-get clean \
+   && rm -Rf /var/lib/apt/lists/* \
+   && rm -Rf /usr/share/doc && find /usr/share/man -type f -delete \
+   && rm -rf /tmp/* /var/tmp/* ; \
+      rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
+      rm -rf /etc/systemd/system/*.wants/* ; \
+      rm -rf /lib/systemd/system/local-fs.target.wants/* ; \
+      rm -rf /lib/systemd/system/sockets.target.wants/*udev* ; \
+      rm -rf /lib/systemd/system/sockets.target.wants/*initctl* ; \
+      rm -rf /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* ; \
+      rm -rf /lib/systemd/system/systemd-update-utmp* ; \
+      rm -rf /lib/systemd/system/getty.target
+
+# Install Python 3.12
+RUN wget -qO- https://pascalroeleven.nl/deb-pascalroeleven.gpg | sudo tee /etc/apt/keyrings/deb-pascalroeleven.gpg
+RUN echo "\
+Types: deb\n\
+URIs: http://deb.pascalroeleven.nl/python3.12\n\
+Suites: bookworm-backports\n\
+Components: main\n\
+Signed-By: /etc/apt/keyrings/deb-pascalroeleven.gpg" \
+> /etc/apt/sources.list.d/pascalroeleven.sources
+
+RUN   apt-get update \
+      && apt-get -y install python3.12 python3.12-dev python3.12-venv
+
+# Fix potential UTF-8 errors with ansible-test.
+RUN locale-gen en_US.UTF-8
+
+CMD ["/lib/systemd/systemd"]
