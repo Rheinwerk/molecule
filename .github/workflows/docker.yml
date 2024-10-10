@@ -35,6 +35,10 @@ jobs:
           - dockerfile: dockerfiles/Ubuntu
             image: ghcr.io/rheinwerk/molecule:ubuntu-22.04
             build-args: "OS_VERSION=22.04"
+          - dockerfile: dockerfiles/Debian
+            image: ghcr.io/rheinwerk/molecule:debian-12
+            build-args: "OS_VERSION=bookworm"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
