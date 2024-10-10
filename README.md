@@ -15,7 +15,7 @@ Based on latest alpine with following software:
 
 ## Ubuntu
 
-Upstream Ubuntu 20.04 / 22.04 Docker Container with following extensions:
+Upstream Ubuntu 20.04 / 22.04 | Debian 12 Docker Container with following extensions:
 
 - Cron
 - DNSmasq
@@ -35,7 +35,7 @@ This will test your role against the following Ansible Scenarios:
 - `ansible_next`
 - `ansible_latest`
 
-Used Ansible Version for these scenarios are defined in [action.yml](examples/action.yml), but can be overridden. Leave `ansible_scenario` unset for simple tests against latest ansible and molecule version. 
+Used Ansible Version for these scenarios are defined in [action.yml](examples/action.yml), but can be overridden. Leave `ansible_scenario` unset for simple tests against latest ansible and molecule version.
 
 # Configuration
 ## Only Lint, no Molecule Tests
