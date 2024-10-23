@@ -60,6 +60,9 @@ Signed-By: /etc/apt/keyrings/deb-pascalroeleven.gpg" \
 RUN   apt-get update \
       && apt-get -y install python3.12 python3.12-dev python3.12-venv
 
+# Use Python 3.12 when calling python3
+RUN   update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
+
 # Fix potential UTF-8 errors with ansible-test.
 RUN locale-gen en_US.UTF-8
 
