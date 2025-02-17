@@ -24,18 +24,22 @@ provisioner:
   config_options:
     defaults:
       bin_ansible_callbacks: yes
-      callbacks_enabled: timer, profile_tasks
+      callbacks_enabled: ansible.posix.timer, ansible.posix.profile_tasks
       display_failed_stderr: true
-      fact_caching: jsonfile
-      fact_caching_connection: '/tmp'
       host_key_checking: false
       remote_tmp: '/tmp/.ansible-${USER}/tmp'
       callback_result_format: yaml
-      roles_path: roles-lib
     diff:
       always: true
+    callback_profile_tasks:
+      task_output_limit: all
   playbooks:
-    converge: ${MOLECULE_CONVERGE_PLAYBOOK:-converge.yml}
+    prepare: ${MOLECULE_PLAYBOOK_PREPARE:-prepare.yml}
+    cleanup: ${MOLECULE_PLAYBOOK_CLEANUP:-cleanup.yml}
+    converge: ${MOLECULE_PLAYBOOK_CONVERGE:-converge.yml}
+    destroy: ${MOLECULE_PLAYBOOK_DESTROY:-destroy.yml}
   log: True
+  env:
+    ANSIBLE_ROLES_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:$MOLECULE_PROJECT_DIRECTORY/roles
 verifier:
   name: ansible

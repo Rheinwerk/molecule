@@ -137,6 +137,8 @@ runs:
       run: molecule test
       shell: bash
       env:
+        ANSIBLE_ROLES_PATH: "${GITHUB_WORKSPACE}"
+        ANSIBLE_ASYNC_DIR: "/tmp/.ansible_async"
         ANSIBLE_FORCE_COLOR: '1'
         ANSIBLE_VERBOSITY: '2'
         CI_JOB_ID: "${{ github.run_id }}"

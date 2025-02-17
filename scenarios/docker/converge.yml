@@ -5,6 +5,7 @@
   vars:
     ansible_user: "{{ ssh_remote_user | default('root') }}"
     ansible_python_interpreter: /usr/bin/python3
+    converge_override_file: "{{ lookup('first_found', playbook_dir + '/converge_override.yml', errors='ignore') }}"
 
   pre_tasks:
     - name: Fake Debian 12 due to python3-apt being from trixie
@@ -22,7 +23,16 @@
       tags:
         - molecule-idempotence-notest
 
+    - name: Include converge override tasks
+      ansible.builtin.include_tasks: "{{ converge_override_file }}"
+      when: converge_override_file is file
+
+    - name: Print GITHUB_WORKSPACE
+      ansible.builtin.debug:
+        msg: |
+          {{ lookup('env', 'GITHUB_WORKSPACE') }}
+
   tasks:
     - name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
-      include_role:
-        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      ansible.builtin.include_role:
+        name: "{{ lookup('env', 'GITHUB_WORKSPACE') }}"
