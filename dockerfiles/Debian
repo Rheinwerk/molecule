@@ -48,17 +48,14 @@ RUN apt-get update \
       rm -rf /lib/systemd/system/getty.target
 
 # Install Python 3.12
-RUN wget -qO- https://pascalroeleven.nl/deb-pascalroeleven.gpg | sudo tee /etc/apt/keyrings/deb-pascalroeleven.gpg
-RUN echo "\
-Types: deb\n\
-URIs: http://deb.pascalroeleven.nl/python3.12\n\
-Suites: bookworm-backports\n\
-Components: main\n\
-Signed-By: /etc/apt/keyrings/deb-pascalroeleven.gpg" \
-> /etc/apt/sources.list.d/pascalroeleven.sources
+COPY  pascalroeleven.sources /etc/apt/sources.list.d/pascalroeleven.sources
+COPY  trixie.sources /etc/apt/sources.list.d/trixie.sources
+COPY  pascalroeleven.gpg /etc/apt/keyrings/deb-pascalroeleven.gpg
 
 RUN   apt-get update \
-      && apt-get -y install python3.12 python3.12-dev python3.12-venv
+      && apt-get -y install python3.12 python3.12-dev python3.12-venv \
+      && apt-get -t trixie install -y --no-install-recommends python3-apt \
+      && rm /usr/lib/python3.12/EXTERNALLY-MANAGED
 
 # Use Python 3.12 when calling python3
 RUN   update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2

@@ -31,12 +31,6 @@ jobs:
           - dockerfile: dockerfiles/Lint
             image: ghcr.io/rheinwerk/molecule:lint
             build-args: "OS_VERSION=3.17"
-          - dockerfile: dockerfiles/Ubuntu
-            image: ghcr.io/rheinwerk/molecule:ubuntu-20.04
-            build-args: "OS_VERSION=20.04"
-          - dockerfile: dockerfiles/Ubuntu
-            image: ghcr.io/rheinwerk/molecule:ubuntu-22.04
-            build-args: "OS_VERSION=22.04"
           - dockerfile: dockerfiles/Debian
             image: ghcr.io/rheinwerk/molecule:debian-12
             build-args: "OS_VERSION=bookworm"
@@ -63,7 +57,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: dockerfiles
           file: ${{ matrix.dockerfile }}
           build-args: ${{ matrix.build-args }}
           push: ${{ github.event_name != 'pull_request' }}

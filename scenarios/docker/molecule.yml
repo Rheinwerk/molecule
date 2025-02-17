@@ -24,13 +24,13 @@ provisioner:
   config_options:
     defaults:
       bin_ansible_callbacks: yes
-      callbacks_enabled: timer, profile_tasks, yaml
+      callbacks_enabled: timer, profile_tasks
       display_failed_stderr: true
       fact_caching: jsonfile
       fact_caching_connection: '/tmp'
       host_key_checking: false
       remote_tmp: '/tmp/.ansible-${USER}/tmp'
-      stdout_callback: yaml
+      callback_result_format: yaml
       roles_path: roles-lib
     diff:
       always: true

@@ -64,9 +64,9 @@ runs:
         echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
       shell: bash
 
-    - name: Set ANSIBLE_PYTHON_INTERPRETER
-      run: echo "ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python${{ inputs.python_version }}" >> $GITHUB_ENV
-      shell: bash
+    # - name: Set ANSIBLE_PYTHON_INTERPRETER
+    #   run: echo "ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python${{ inputs.python_version }}" >> $GITHUB_ENV
+    #   shell: bash
 
     - name: Set CI_HOSTNAME
       run: echo "CI_HOSTNAME=$(echo $MOLECULE_DISTRO | tr -dc '[:alnum:]\n\r' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -119,6 +119,10 @@ runs:
     - name: Install collections from collections.yml
       if: "${{ inputs.ansible_scenario != '' }}"
       run: ansible-galaxy install -r git_molecule/requirements/collections_${{ inputs.ansible_scenario }}.yml
+      shell: bash
+
+    - name: Install roles
+      run: ansible-galaxy install -r ${GITHUB_WORKSPACE}/molecule/default/requirements.yml -p ${GITHUB_WORKSPACE}/molecule/default/roles || echo "no additional role requirements"
       shell: bash
 
     - name: Print molecule version infos
