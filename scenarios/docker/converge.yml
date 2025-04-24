@@ -8,13 +8,8 @@
     converge_override_file: "{{ lookup('first_found', playbook_dir + '/converge_override.yml', errors='ignore') }}"
 
   pre_tasks:
-    - name: Fake Debian 12 due to python3-apt being from trixie
-      ansible.builtin.set_fact:
-        ansible_distribution_major_version: 12
-        ansible_distribution_release: "bookworm"
-
     - name: update APT Cache
-      apt:
+      ansible.builtin.apt:
         update_cache: yes
         cache_valid_time: 600
       register: result
