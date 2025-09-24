@@ -42,10 +42,10 @@ runs:
   using: "composite"
   steps:
     - name: Check out the codebase
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Check out the molecule repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: Rheinwerk/molecule
         path: 'git_molecule'
