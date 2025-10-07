@@ -13,19 +13,44 @@ Based on latest alpine with following software:
 - shellcheck
 - yamllint
 
-## Ubuntu
+## Debian
 
-Upstream Ubuntu 20.04 / 22.04 | Debian 12 Docker Container with following extensions:
+Upstream Debian 12 (Bookworm) Docker Container with following extensions:
 
 - Cron
 - DNSmasq
 - GnuPG
-- Python3
+- Python 3.12 (via [pascalroeleven's backport](https://github.com/pascallj/python3.12-backport))
+- Python 3.12 virtualenv at `/opt/ansible_virtualenv`
 - Rsyslog
 - SystemD
 ...
 
 # Usage
+
+## Building Docker Images
+
+You can build the Docker images locally using the provided Makefile:
+
+```bash
+# Build all images
+make build-all
+
+# Build specific images
+make build-debian-12
+make build-lint
+
+# Build and push to registry (multi-platform: amd64 + arm64)
+make push-all
+make push-debian-12
+make push-lint
+
+# Clean build cache
+make clean
+
+# Show available targets
+make help
+```
 
 ## CI Workflow
 To use this action in your repo you can create a new Github Workflow with the example [molecule.yml](examples/molecule.yml)
