@@ -13,9 +13,9 @@ Based on latest alpine with following software:
 - shellcheck
 - yamllint
 
-## Debian
+## Debian / Ubuntu
 
-Upstream Debian 12 (Bookworm) Docker Container with following extensions:
+Upstream Debian 12 (Bookworm), Debian 13 (Trixie), Ubuntu 22.04 (Jammy), and Ubuntu 24.04 (Noble) Docker Containers with following extensions:
 
 - Cron
 - DNSmasq
@@ -38,11 +38,17 @@ make build-all
 
 # Build specific images
 make build-debian-12
+make build-debian-13
+make build-ubuntu-22-04
+make build-ubuntu-24-04
 make build-lint
 
 # Build and push to registry (multi-platform: amd64 + arm64)
 make push-all
 make push-debian-12
+make push-debian-13
+make push-ubuntu-22-04
+make push-ubuntu-24-04
 make push-lint
 
 # Clean build cache

@@ -32,13 +32,17 @@ jobs:
             image: ghcr.io/rheinwerk/molecule:lint
             build-args: "OS_VERSION=3.17"
           - dockerfile: dockerfiles/Debian
-            image: ghcr.io/rheinwerk/molecule:debian-12
-            build-args: |
-              OS_VERSION=bookworm
-              ANSIBLE_VERSION=2.18.5
-          - dockerfile: dockerfiles/Packer
-            image: ghcr.io/rheinwerk/molecule:debian-12-pkr
+            image: ghcr.io/rheinwerk/molecule:pkr-debian-12
             build-args: "OS_VERSION=bookworm"
+          - dockerfile: dockerfiles/Debian
+            image: ghcr.io/rheinwerk/molecule:pkr-debian-13
+            build-args: "OS_VERSION=trixie"
+          - dockerfile: dockerfiles/Ubuntu
+            image: ghcr.io/rheinwerk/molecule:pkr-ubuntu-22.04
+            build-args: "OS_VERSION=22.04"
+          - dockerfile: dockerfiles/Ubuntu
+            image: ghcr.io/rheinwerk/molecule:pkr-ubuntu-24.04
+            build-args: "OS_VERSION=24.04"
 
     steps:
       - name: Checkout
