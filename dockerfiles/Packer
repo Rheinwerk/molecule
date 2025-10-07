@@ -4,14 +4,15 @@ FROM debian:${OS_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Add Python 3.12 backport repository for Bookworm
+# Add Python 3.12 backport repository for Bookworm and Bullseye for libssl1.1
 RUN apt-get update \
    && apt-get install -y --no-install-recommends \
       ca-certificates \
       wget \
    && mkdir -p /etc/apt/keyrings \
    && wget -qO /etc/apt/keyrings/deb-pascalroeleven.gpg https://pascalroeleven.nl/deb-pascalroeleven.gpg \
-   && echo "deb [signed-by=/etc/apt/keyrings/deb-pascalroeleven.gpg] http://deb.pascalroeleven.nl/python3.12 bookworm-backports main" > /etc/apt/sources.list.d/pascalroeleven.list
+   && echo "deb [signed-by=/etc/apt/keyrings/deb-pascalroeleven.gpg] http://deb.pascalroeleven.nl/python3.12 bookworm-backports main" > /etc/apt/sources.list.d/pascalroeleven.list \
+   && echo "deb http://deb.debian.org/debian bullseye main" > /etc/apt/sources.list.d/bullseye.list
 
 # Install dependencies.
 RUN apt-get update \
@@ -24,6 +25,7 @@ RUN apt-get update \
       cron \
       dnsmasq \
       iproute2 \
+      libssl1.1 \
       locales \
       lsb-release \
       procps \
