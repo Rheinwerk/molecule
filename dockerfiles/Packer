@@ -61,6 +61,10 @@ RUN apt-get update \
       rm -rf /lib/systemd/system/getty.target \
       && rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED
 
+# Add CenterDevice CA certificates
+COPY centerdevice_root_ca_2024_01.crt centerdevice_intermediate_ca_2024_01.crt /usr/local/share/ca-certificates/
+RUN update-ca-certificates
+
 # Fix potential UTF-8 errors with ansible-test.
 RUN locale-gen en_US.UTF-8
 
