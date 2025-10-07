@@ -28,11 +28,10 @@ help:
 	@echo "  clean            - Clean up Docker build cache"
 	@echo "  help             - Show this help message"
 
-# Build targets (local only, single platform)
+# Build targets (local only, native platform)
 build-lint:
 	@echo "Building lint image..."
 	docker buildx build \
-		--platform linux/amd64 \
 		--build-arg OS_VERSION=3.17 \
 		--file $(CONTEXT)/Lint \
 		--tag $(LINT_IMAGE) \
@@ -42,7 +41,6 @@ build-lint:
 build-debian-12:
 	@echo "Building Debian 12 (Bookworm) image with ansible..."
 	docker buildx build \
-		--platform linux/amd64 \
 		--build-arg OS_VERSION=bookworm \
 		--build-arg ANSIBLE_VERSION=$(ANSIBLE_VERSION) \
 		--file $(CONTEXT)/Debian \
@@ -53,7 +51,6 @@ build-debian-12:
 build-packer:
 	@echo "Building Packer image without ansible..."
 	docker buildx build \
-		--platform linux/amd64 \
 		--build-arg OS_VERSION=bookworm \
 		--file $(CONTEXT)/Packer \
 		--tag $(PACKER_IMAGE) \
