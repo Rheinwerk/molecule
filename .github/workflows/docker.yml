@@ -36,6 +36,9 @@ jobs:
             image_tag: lint
             os_version: "3.22"
           - dockerfile: dockerfiles/Debian
+            image_tag: debian-12
+            os_version: "12"
+          - dockerfile: dockerfiles/Debian
             image_tag: pkr-debian-12
             os_version: "12"
           - dockerfile: dockerfiles/Debian

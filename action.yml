@@ -19,6 +19,9 @@ inputs:
   distro:
     description: 'Execute tests against distribution'
     default: 'ubuntu-20.04'
+  github_token:
+    description: 'GitHub token for container registry authentication'
+    required: true
   molecule_scenario:
     description: Molecule scenario for testing
     default: 'docker'
@@ -43,6 +46,13 @@ runs:
   steps:
     - name: Check out the codebase
       uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.github_token }}
 
     - name: Check out the molecule repository
       uses: actions/checkout@v4
@@ -142,6 +152,8 @@ runs:
         ANSIBLE_FORCE_COLOR: '1'
         ANSIBLE_VERBOSITY: '2'
         CI_JOB_ID: "${{ github.run_id }}"
+        GITHUB_ACTOR: "${{ github.actor }}"
+        GITHUB_TOKEN: "${{ inputs.github_token }}"
         MOLECULE_DEBUG: '1'
         MOLECULE_DISTRO: "${{ inputs.distro }}"
         MOLECULE_SCENARIO_NAME: "${{ inputs.molecule_scenario }}"

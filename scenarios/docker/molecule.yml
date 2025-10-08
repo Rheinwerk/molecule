@@ -19,6 +19,11 @@ platforms:
       - /run
       - /tmp
       - /run/lock
+    registry:
+      url: ghcr.io
+      credentials:
+        username: ${GITHUB_ACTOR}
+        password: ${GITHUB_TOKEN}
 provisioner:
   name: ansible
   config_options:
