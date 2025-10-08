@@ -5,7 +5,7 @@
   vars:
     ansible_user: "{{ ssh_remote_user | default('root') }}"
     ansible_python_interpreter: /usr/bin/python3
-    converge_override_file: "{{ lookup('first_found', playbook_dir + '/converge_override.yml', errors='ignore') }}"
+    converge_override_file: "{{ lookup('ansible.builtin.first_found', [playbook_dir + '/converge_override.yml'], errors='ignore') or '' }}"
 
   pre_tasks:
     - name: update APT Cache
@@ -20,7 +20,7 @@
 
     - name: Include converge override tasks
       ansible.builtin.include_tasks: "{{ converge_override_file }}"
-      when: converge_override_file is file
+      when: converge_override_file is defined and converge_override_file != ""
 
     - name: Print GITHUB_WORKSPACE
       ansible.builtin.debug:
