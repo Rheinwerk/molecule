@@ -1,0 +1,64 @@
+ARG OS_VERSION=12
+
+FROM debian:${OS_VERSION}
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Add Python 3.12 backport repository
+RUN apt-get update \
+   && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      wget \
+   && mkdir -p /etc/apt/keyrings \
+   && wget -qO /etc/apt/keyrings/deb-pascalroeleven.gpg https://pascalroeleven.nl/deb-pascalroeleven.gpg \
+   && echo "deb [signed-by=/etc/apt/keyrings/deb-pascalroeleven.gpg] http://deb.pascalroeleven.nl/python3.12 bookworm-backports main" > /etc/apt/sources.list.d/pascalroeleven.list
+
+# Install dependencies.
+RUN apt-get update \
+   && apt-get install -y --no-install-recommends \
+      apt-transport-https \
+      bash \
+      gnupg \
+      ca-certificates \
+      curl \
+      cron \
+      dnsmasq \
+      iproute2 \
+      locales \
+      lsb-release \
+      procps \
+      python3.12-minimal \
+      python3.12 \
+      python3.12-venv \
+      python3-apt \
+      python3-pip \
+      python3-setuptools \
+      python3-simplejson \
+      python3-debian \
+      rsyslog \
+      software-properties-common \
+      sudo \
+      systemd \
+      systemd-sysv \
+      tar \
+      unzip \
+      wget \
+      xz-utils \
+      zip \
+   && sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
+   && locale-gen en_US.UTF-8 \
+   && apt-get clean \
+   && rm -Rf /var/lib/apt/lists/* \
+   && rm -Rf /usr/share/doc && find /usr/share/man -type f -delete \
+   && rm -rf /tmp/* /var/tmp/* ; \
+      rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
+      rm -rf /etc/systemd/system/*.wants/* ; \
+      rm -rf /lib/systemd/system/local-fs.target.wants/* ; \
+      rm -rf /lib/systemd/system/sockets.target.wants/*udev* ; \
+      rm -rf /lib/systemd/system/sockets.target.wants/*initctl* ; \
+      rm -rf /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* ; \
+      rm -rf /lib/systemd/system/systemd-update-utmp* ; \
+      rm -rf /lib/systemd/system/getty.target \
+      && rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED
+
+CMD ["/lib/systemd/systemd"]
