@@ -34,4 +34,8 @@ RUN apt-get update \
 # Create cd-admin user
 RUN useradd -m -s /bin/bash cd-admin
 
+# Pre-configure Docker daemon for DinD compatibility
+RUN mkdir -p /etc/docker && \
+    echo '{"features": {"containerd-snapshotter": false}}' > /etc/docker/daemon.json
+
 CMD ["/lib/systemd/systemd"]
