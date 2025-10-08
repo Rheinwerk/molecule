@@ -16,45 +16,57 @@ on:
     tags:
       - 'v*'
     paths:
-    - 'dockerfiles/**'
+      - 'dockerfiles/**'
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/rheinwerk/molecule
 
 jobs:
   docker:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
         include:
           - dockerfile: dockerfiles/Lint
-            image: ghcr.io/rheinwerk/molecule:lint
-            build-args: "OS_VERSION=3.17"
+            image_tag: lint
+            os_version: "3.22"
           - dockerfile: dockerfiles/Debian
-            image: ghcr.io/rheinwerk/molecule:pkr-debian-12
-            build-args: "OS_VERSION=bookworm"
+            image_tag: pkr-debian-12
+            os_version: "12"
           - dockerfile: dockerfiles/Debian
-            image: ghcr.io/rheinwerk/molecule:pkr-debian-13
-            build-args: "OS_VERSION=trixie"
+            image_tag: pkr-debian-13
+            os_version: "13"
           - dockerfile: dockerfiles/Ubuntu
-            image: ghcr.io/rheinwerk/molecule:pkr-ubuntu-22.04
-            build-args: "OS_VERSION=22.04"
+            image_tag: pkr-ubuntu-2204
+            os_version: "22.04"
           - dockerfile: dockerfiles/Ubuntu
-            image: ghcr.io/rheinwerk/molecule:pkr-ubuntu-24.04
-            build-args: "OS_VERSION=24.04"
+            image_tag: pkr-ubuntu-2404
+            os_version: "24.04"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: set up qemu
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: amd64,arm64
 
-      - name: set up docker buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}
+          tags: |
+            type=raw,value=${{ matrix.image_tag }}
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
@@ -65,13 +77,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        id: docker_build
         uses: docker/build-push-action@v6
         with:
           context: dockerfiles
           file: ${{ matrix.dockerfile }}
-          build-args: ${{ matrix.build-args }}
+          build-args: OS_VERSION=${{ matrix.os_version }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ matrix.image }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
