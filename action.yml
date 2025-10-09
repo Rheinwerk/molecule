@@ -128,6 +128,10 @@ runs:
       run: ansible-galaxy install -r git_molecule/requirements/collections_${{ inputs.ansible_scenario }}.yml
       shell: bash
 
+    - name: Install collections from requirements
+      run: ansible-galaxy collection install -r ${GITHUB_WORKSPACE}/molecule/default/requirements.yml || echo "no additional collection requirements"
+      shell: bash
+
     - name: Install roles
       run: ansible-galaxy install -r ${GITHUB_WORKSPACE}/molecule/default/requirements.yml -p ${GITHUB_WORKSPACE}/molecule/default/roles || echo "no additional role requirements"
       shell: bash
