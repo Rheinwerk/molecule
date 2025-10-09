@@ -67,7 +67,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}
+          images: |
+            ${{ env.IMAGE_PREFIX }}
+            ghcr.io/rheinwerk/registry
           tags: |
             type=raw,value=${{ matrix.image_tag }}
 
