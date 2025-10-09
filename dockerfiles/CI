@@ -47,6 +47,8 @@ RUN apt-get update \
       zip \
    && sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
    && locale-gen en_US.UTF-8 \
+   && rm -f /etc/apt/sources.list.d/pascalroeleven.list \
+   && rm -f /etc/apt/keyrings/deb-pascalroeleven.gpg \
    && apt-get clean \
    && rm -Rf /var/lib/apt/lists/* \
    && rm -Rf /usr/share/doc && find /usr/share/man -type f -delete \
