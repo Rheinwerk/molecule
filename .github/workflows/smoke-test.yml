@@ -26,11 +26,17 @@ concurrency:
   group: smoke-test-${{ github.ref }}
   cancel-in-progress: true
 
+# The reference role's playbooks run on the runner: keep the token read-only
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   transparent-hugepage-setup:
     uses: ./.github/workflows/role.yml
     with:
       role_repository: Rheinwerk/ansible-role-transparent_hugepage_setup
-      role_ref: master
+      # pinned fixture, not a moving branch: this tests the scenario, not the role
+      role_ref: 5dcd72f6d5f0ea9e110f13ee6d6c987f2c6ff585
       # molecule always runs for a foreign role repository, no force_run needed
       molecule_ref: ${{ github.event.pull_request.head.sha || github.sha }}

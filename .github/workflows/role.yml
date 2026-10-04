@@ -46,6 +46,11 @@ on:
         description: Ansible Galaxy API key, used by the release job on tags only
         required: false
 
+# Nothing here writes to GitHub: the release job talks to Galaxy with its own key
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   changes:
     name: Changes

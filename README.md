@@ -196,9 +196,9 @@ It needs `molecule` and `molecule-plugins[docker]` in the active virtualenv and 
 
 - [ci.yml](.github/workflows/ci.yml) lints the scenario (ansible-lint, yamllint) and the workflows
   (actionlint) on every push and pull request.
-- [smoke-test.yml](.github/workflows/smoke-test.yml) runs the reusable workflow against
-  `Rheinwerk/ansible-role-transparent_hugepage_setup` with the action, scenario and collections of the pushed
-  ref whenever one of them changes. A role can do the same for a branch of this repository by dispatching
+- [smoke-test.yml](.github/workflows/smoke-test.yml) runs the reusable workflow against a pinned
+  commit of `Rheinwerk/ansible-role-transparent_hugepage_setup` with the action, scenario and collections of the
+  pushed ref whenever one of them changes. The workflows run with a read-only token. A role can do the same for a branch of this repository by dispatching
   its CI with `molecule_ref`.
 
 # Pinned versions
