@@ -25,7 +25,7 @@ jobs:
 ## Pipeline
 
 1. **Changes**: decides whether molecule has to run. Changes to `README.md`, `LICENSE`, `.gitignore`,
-   `renovate.json`, `.github/dependabot.yml` and `docs/` alone skip it; deletions count as changes.
+   `.github/dependabot.yml` and `docs/` alone skip it; deletions count as changes.
 2. **Lint**: `ansible-lint --offline` and `yamllint` in `ghcr.io/rheinwerk/molecule:lint`. Always runs.
 3. **Molecule**: one job per matrix entry, by default `debian-12` with the `ansible_current`, `ansible_next`
    and `ansible_latest` scenarios. `ansible_next` and `ansible_latest` are experimental and may fail.
@@ -203,16 +203,17 @@ It needs `molecule` and `molecule-plugins[docker]` in the active virtualenv and 
 
 # Pinned versions
 
-- `molecule` and `molecule-plugins` are pinned as defaults in [action.yml](action.yml). Molecule installs
-  the newest version otherwise, and a new molecule-plugins release broke every role run in 2026 by rejecting a
-  key in the shared `molecule.yml`.
+- `molecule` and `molecule-plugins` are pinned in [requirements/molecule.txt](requirements/molecule.txt), which
+  the action installs. Molecule installed the newest version before, and a new molecule-plugins release broke
+  every role run in 2026 by rejecting a key in the shared `molecule.yml`. The `molecule_version` and
+  `molecule_plugins_version` inputs override the pins for a single run.
+- The tools of the lint image are pinned in [dockerfiles/lint-requirements.txt](dockerfiles/lint-requirements.txt).
 - The Ansible collections for the molecule runs and the lint image are pinned in
   [dockerfiles/collections.yml](dockerfiles/collections.yml).
-- The tools in the lint image are pinned as `ARG`s in [dockerfiles/Lint](dockerfiles/Lint).
 
-[renovate.json](renovate.json) describes all of them for Renovate (ansible-galaxy manager plus regex
-managers for the `# renovate:` comments). Until Renovate is enabled for the organisation,
-[dependabot.yml](.github/dependabot.yml) keeps the GitHub Actions current.
+[Dependabot](.github/dependabot.yml) opens pull requests for the GitHub Actions and for both requirements
+files; the smoke test runs each of them against a role. Dependabot has no Galaxy support, so the collections
+are bumped by hand now and then.
 
 # Containers
 

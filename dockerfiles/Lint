@@ -2,32 +2,17 @@ ARG OS_VERSION=latest
 
 FROM alpine:${OS_VERSION}
 
-# Pinned Python tools, updated by Renovate. Start values match the Alpine packages the image
-# used before, so switching to pip changed nothing for the roles.
-# renovate: datasource=pypi depName=ansible-core
-ARG ANSIBLE_CORE_VERSION=2.18.19
-# renovate: datasource=pypi depName=ansible-lint
-ARG ANSIBLE_LINT_VERSION=24.12.2
-# renovate: datasource=pypi depName=yamllint
-ARG YAMLLINT_VERSION=1.37.0
-# renovate: datasource=pypi depName=black
-ARG BLACK_VERSION=25.1.0
-
 ENV PIP_BREAK_SYSTEM_PACKAGES=1 \
     PIP_NO_CACHE_DIR=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-COPY collections.yml /tmp/collections.yml
+COPY lint-requirements.txt collections.yml /tmp/
 
 # The collections let ansible-lint --offline resolve the FQCNs the roles use
 RUN apk --no-cache add bash curl git python3 py3-pip shellcheck \
-    && pip3 install --no-compile \
-       "ansible-core==${ANSIBLE_CORE_VERSION}" \
-       "ansible-lint==${ANSIBLE_LINT_VERSION}" \
-       "yamllint==${YAMLLINT_VERSION}" \
-       "black==${BLACK_VERSION}" \
+    && pip3 install --no-compile -r /tmp/lint-requirements.txt \
     && ansible-galaxy collection install -r /tmp/collections.yml -p /usr/share/ansible/collections \
-    && rm -rf /tmp/collections.yml /root/.ansible /root/.cache \
+    && rm -rf /tmp/lint-requirements.txt /tmp/collections.yml /root/.ansible /root/.cache \
     && find /usr/lib/python3* -name '__pycache__' -type d -prune -exec rm -rf {} +
 
 CMD ["/bin/bash"]

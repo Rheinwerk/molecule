@@ -22,13 +22,11 @@ inputs:
     description: Molecule scenario for testing
     default: 'docker'
   molecule_version:
-    description: molecule version as pip specifier, pinned and updated by Renovate
-    # renovate: datasource=pypi depName=molecule
-    default: '==26.9.0'
+    description: molecule version as pip specifier, overrides the pin in requirements/molecule.txt
+    default: ''
   molecule_plugins_version:
-    description: molecule-plugins version as pip specifier, pinned and updated by Renovate
-    # renovate: datasource=pypi depName=molecule-plugins
-    default: '==26.9.28'
+    description: molecule-plugins version as pip specifier, overrides the pin in requirements/molecule.txt
+    default: ''
   molecule_args:
     description: Additional arguments passed to molecule test
     default: ''
@@ -119,23 +117,33 @@ runs:
 
     - name: Install software for 'ansible_current' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_current' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_current_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_current_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_current_version }}' 'Jinja2${{ inputs.jinja2_current_version }}' -r git_molecule/requirements/molecule.txt
       shell: bash
 
     - name: Install software for 'ansible_next' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_next' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_next_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_next_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/molecule.txt
       shell: bash
 
     - name: Install software for 'ansible_latest' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_latest' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/molecule.txt
       shell: bash
 
     - name: Install software for generic use case
       if: "${{ inputs.ansible_scenario == '' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/molecule.txt
       shell: bash
+
+    - name: Override the pinned molecule versions
+      if: "${{ inputs.molecule_version != '' || inputs.molecule_plugins_version != '' }}"
+      run: |
+        if [ -n "$MOLECULE_VERSION" ]; then pip install "molecule${MOLECULE_VERSION}"; fi
+        if [ -n "$MOLECULE_PLUGINS_VERSION" ]; then pip install "molecule-plugins[docker]${MOLECULE_PLUGINS_VERSION}"; fi
+      shell: bash
+      env:
+        MOLECULE_VERSION: "${{ inputs.molecule_version }}"
+        MOLECULE_PLUGINS_VERSION: "${{ inputs.molecule_plugins_version }}"
 
     - name: Pip list
       run: pip list
