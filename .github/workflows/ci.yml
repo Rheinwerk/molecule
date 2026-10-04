@@ -30,4 +30,4 @@ jobs:
 
       # ./git_molecule in role.yml is checked out at runtime, actionlint cannot see it
       - name: Workflow lint
-        run: docker run --rm -v "${GITHUB_WORKSPACE}:/repo" -w /repo rhysd/actionlint:latest -color -ignore 'could not read action metadata'
+        run: docker run --rm -v "${GITHUB_WORKSPACE}:/repo" -w /repo rhysd/actionlint:1.7.12 -color -ignore 'could not read action metadata'
