@@ -22,14 +22,32 @@ inputs:
     description: Molecule scenario for testing
     default: 'docker'
   molecule_version:
-    description: Molecule version to use, leave empty for newest
+    description: molecule version as pip specifier, pinned and updated by Renovate
+    # renovate: datasource=pypi depName=molecule
+    default: '==26.9.0'
+  molecule_plugins_version:
+    description: molecule-plugins version as pip specifier, pinned and updated by Renovate
+    # renovate: datasource=pypi depName=molecule-plugins
+    default: '==26.9.28'
+  molecule_args:
+    description: Additional arguments passed to molecule test
     default: ''
+  molecule_ref:
+    description: Ref of Rheinwerk/molecule to take the scenario and the collections from
+    default: 'main'
   distro:
     description: 'Execute tests against distribution'
     default: 'debian-12'
   test_type:
     description: 'Choose between: unit'
     default: 'unit'
+  # Role under test
+  role_repository:
+    description: Repository of the role under test, defaults to the calling repository
+    default: ''
+  role_ref:
+    description: Ref of the role under test, defaults to the triggering ref
+    default: ''
   # Python/Jinja2 versions
   python_version:
     description: Python version to use
@@ -48,17 +66,21 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Check out the codebase
-      uses: actions/checkout@v4
+    - name: Check out the role
+      uses: actions/checkout@v7
+      with:
+        repository: ${{ inputs.role_repository || github.repository }}
+        ref: ${{ inputs.role_ref }}
 
     - name: Check out the molecule repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: Rheinwerk/molecule
+        ref: ${{ inputs.molecule_ref }}
         path: 'git_molecule'
 
     - name: Set up Python 3
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ inputs.python_version }}
 
@@ -70,10 +92,6 @@ runs:
         echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
         echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
       shell: bash
-
-    # - name: Set ANSIBLE_PYTHON_INTERPRETER
-    #   run: echo "ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python${{ inputs.python_version }}" >> $GITHUB_ENV
-    #   shell: bash
 
     - name: Set CI_HOSTNAME
       run: echo "CI_HOSTNAME=$(echo $MOLECULE_DISTRO | tr -dc '[:alnum:]\n\r' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -101,31 +119,30 @@ runs:
 
     - name: Install software for 'ansible_current' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_current' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_current_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_current_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_current_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_current_version }}'
       shell: bash
 
     - name: Install software for 'ansible_next' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_next' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_next_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_next_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Install software for 'ansible_latest' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_latest' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Install software for generic use case
       if: "${{ inputs.ansible_scenario == '' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' molecule-plugins[docker] docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'molecule${{ inputs.molecule_version }}' 'molecule-plugins[docker]${{ inputs.molecule_plugins_version }}' docker netaddr jmespath dnspython 'Jinja2${{ inputs.jinja2_version }}'
       shell: bash
 
     - name: Pip list
       run: pip list
       shell: bash
 
-    - name: Install collections from collections.yml
-      if: "${{ inputs.ansible_scenario != '' }}"
-      run: ansible-galaxy install -r git_molecule/requirements/collections_${{ inputs.ansible_scenario }}.yml
+    - name: Install pinned collections
+      run: ansible-galaxy collection install -r git_molecule/dockerfiles/collections.yml
       shell: bash
 
     - name: Install collections from requirements
@@ -145,9 +162,11 @@ runs:
       shell: bash
 
     - name: Run Molecule tests
-      run: molecule test
+      # word splitting of MOLECULE_ARGS is intended (several molecule CLI arguments)
+      run: molecule test $MOLECULE_ARGS
       shell: bash
       env:
+        MOLECULE_ARGS: "${{ inputs.molecule_args }}"
         ANSIBLE_ROLES_PATH: "${GITHUB_WORKSPACE}"
         ANSIBLE_ASYNC_DIR: "/tmp/.ansible_async"
         ANSIBLE_FORCE_COLOR: '1'

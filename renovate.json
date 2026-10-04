@@ -1,0 +1,43 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "ansible-galaxy": {
+    "enabled": true,
+    "managerFilePatterns": [
+      "/^dockerfiles/collections\\.ya?ml$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Tool versions pinned via ARG with a renovate comment in the Dockerfiles",
+      "managerFilePatterns": [
+        "/^dockerfiles/[A-Z][A-Za-z]*$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nARG [A-Z0-9_]+=(?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Python tool versions pinned as action input defaults with a renovate comment",
+      "managerFilePatterns": [
+        "/^action\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+default: '==(?<currentValue>[^']+)'"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "ansible-galaxy"
+      ],
+      "groupName": "ansible collections",
+      "groupSlug": "ansible-collections"
+    }
+  ]
+}
