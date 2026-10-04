@@ -9,6 +9,7 @@ on:
     paths:
       - action.yml
       - dockerfiles/collections.yml
+      - requirements/requirements-molecule.txt
       - scenarios/**
       - .github/workflows/role.yml
       - .github/workflows/smoke-test.yml
@@ -18,6 +19,7 @@ on:
     paths:
       - action.yml
       - dockerfiles/collections.yml
+      - requirements/requirements-molecule.txt
       - scenarios/**
       - .github/workflows/role.yml
       - .github/workflows/smoke-test.yml

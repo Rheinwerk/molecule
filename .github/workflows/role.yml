@@ -76,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           # Files that cannot change the role's behaviour; deletions count as changes
-          ignore='^(README\.md|LICENSE|\.gitignore|\.github/dependabot\.yml|docs/.*)$'
+          ignore='^(README\.md|LICENSE|\.gitignore|renovate\.json|docs/.*)$'
           forced=''
           [ "$FORCE_RUN" = 'true' ] && forced='force_run'
           [ -n "$ROLE_REPOSITORY" ] && forced='foreign role repository'

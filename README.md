@@ -25,7 +25,7 @@ jobs:
 ## Pipeline
 
 1. **Changes**: decides whether molecule has to run. Changes to `README.md`, `LICENSE`, `.gitignore`,
-   `.github/dependabot.yml` and `docs/` alone skip it; deletions count as changes.
+   `renovate.json` and `docs/` alone skip it; deletions count as changes.
 2. **Lint**: `ansible-lint --offline` and `yamllint` in `ghcr.io/rheinwerk/molecule:lint`. Always runs.
 3. **Molecule**: one job per matrix entry, by default `debian-12` with the `ansible_current`, `ansible_next`
    and `ansible_latest` scenarios. `ansible_next` and `ansible_latest` are experimental and may fail.
@@ -77,7 +77,8 @@ in `meta/main.yml`. Lint and release still run.
 
 1. Replace `.github/workflows/ci.yml` with [examples/molecule.yml](examples/molecule.yml).
 2. Remove `parseable: true` from `.ansible-lint` if present; current ansible-lint rejects the key.
-3. Make sure `GALAXY_API_KEY` is available to the repository (organisation secret).
+3. Make sure the `GALAXY_API_KEY` secret is available to the repository.
+4. Add `renovate.json` with `"extends": ["github>Rheinwerk/molecule"]` and remove `.github/dependabot.yml`.
 
 The composite action (`uses: Rheinwerk/molecule@main`) keeps working for roles that have not migrated yet.
 

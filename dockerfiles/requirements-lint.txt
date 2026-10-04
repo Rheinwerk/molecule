@@ -1,4 +1,4 @@
-# Tools of the lint image, pinned; Dependabot (pip) opens pull requests for new versions.
+# Tools of the lint image, pinned; Renovate opens pull requests for new versions.
 # Start values match the Alpine packages the image shipped before the switch to pip.
 ansible-core==2.18.19
 ansible-lint==24.12.2

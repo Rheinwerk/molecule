@@ -1,7 +1,7 @@
 ---
 # Collections installed for molecule runs (action.yml) and baked into the lint image (dockerfiles/Lint).
-# Pinned on purpose. Dependabot has no Galaxy support, so bump the versions by hand now and then;
-# the smoke test runs the result against a role.
+# Pinned on purpose: Renovate (ansible-galaxy manager, see renovate.json) opens pull requests for new
+# versions, the smoke test runs them against a role.
 collections:
   - name: amazon.aws
     version: 11.4.0

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate preset for the Rheinwerk Ansible roles, used with \"extends\": [\"github>Rheinwerk/molecule\"]",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitsDisabled"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "packageRules": [
+    {
+      "description": "One pull request for all GitHub Actions updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "github actions"
+    },
+    {
+      "description": "One pull request for all Ansible collections and roles (requirements.yml, galaxy.yml)",
+      "matchManagers": [
+        "ansible-galaxy"
+      ],
+      "groupName": "ansible galaxy"
+    }
+  ]
+}

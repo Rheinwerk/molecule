@@ -22,10 +22,10 @@ inputs:
     description: Molecule scenario for testing
     default: 'docker'
   molecule_version:
-    description: molecule version as pip specifier, overrides the pin in requirements/molecule.txt
+    description: molecule version as pip specifier, overrides the pin in requirements/requirements-molecule.txt
     default: ''
   molecule_plugins_version:
-    description: molecule-plugins version as pip specifier, overrides the pin in requirements/molecule.txt
+    description: molecule-plugins version as pip specifier, overrides the pin in requirements/requirements-molecule.txt
     default: ''
   molecule_args:
     description: Additional arguments passed to molecule test
@@ -117,22 +117,22 @@ runs:
 
     - name: Install software for 'ansible_current' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_current' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_current_version }}' 'Jinja2${{ inputs.jinja2_current_version }}' -r git_molecule/requirements/molecule.txt
+      run: pip install 'ansible-core${{ inputs.ansible_current_version }}' 'Jinja2${{ inputs.jinja2_current_version }}' -r git_molecule/requirements/requirements-molecule.txt
       shell: bash
 
     - name: Install software for 'ansible_next' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_next' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_next_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/molecule.txt
+      run: pip install 'ansible-core${{ inputs.ansible_next_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/requirements-molecule.txt
       shell: bash
 
     - name: Install software for 'ansible_latest' scenario
       if: "${{ inputs.ansible_scenario == 'ansible_latest' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/molecule.txt
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/requirements-molecule.txt
       shell: bash
 
     - name: Install software for generic use case
       if: "${{ inputs.ansible_scenario == '' }}"
-      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/molecule.txt
+      run: pip install 'ansible-core${{ inputs.ansible_version }}' 'Jinja2${{ inputs.jinja2_version }}' -r git_molecule/requirements/requirements-molecule.txt
       shell: bash
 
     - name: Override the pinned molecule versions
