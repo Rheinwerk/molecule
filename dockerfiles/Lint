@@ -11,7 +11,9 @@ COPY requirements-lint.txt collections.yml /tmp/
 # The collections let ansible-lint --offline resolve the FQCNs the roles use
 RUN apk --no-cache add bash curl git python3 py3-pip shellcheck \
     && pip3 install --no-compile -r /tmp/requirements-lint.txt \
-    && ansible-galaxy collection install -r /tmp/collections.yml -p /usr/share/ansible/collections \
+    # Galaxy resets connections now and then, retry a few times
+    && for i in 1 2 3 4; do ansible-galaxy collection install -r /tmp/collections.yml -p /usr/share/ansible/collections && break || sleep 15; done \
+    && test -d /usr/share/ansible/collections/ansible_collections/community/general \
     && rm -rf /tmp/requirements-lint.txt /tmp/collections.yml /root/.ansible /root/.cache \
     && find /usr/lib/python3* -name '__pycache__' -type d -prune -exec rm -rf {} +
 
