@@ -8,7 +8,7 @@
     converge_override_file: "{{ lookup('ansible.builtin.first_found', [playbook_dir + '/converge_override.yml'], errors='ignore') or '' }}"
 
   pre_tasks:
-    - name: update APT Cache
+    - name: Update APT Cache
       ansible.builtin.apt:
         update_cache: yes
         cache_valid_time: 600
