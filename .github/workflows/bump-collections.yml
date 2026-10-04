@@ -1,0 +1,80 @@
+---
+# Weekly: pin dockerfiles/collections.yml to the highest versions on Galaxy and open a pull request
+# (Dependabot has no Galaxy support). Pull requests opened with the Actions token trigger no
+# pull_request workflows, so CI and the smoke test are dispatched explicitly. If the repository
+# does not allow Actions to create pull requests, an issue with the diff is opened instead.
+name: Bump collections
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: bump-collections
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Bump
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: bump-collections
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v7
+
+      - name: Bump the pinned collections
+        id: bump
+        run: |
+          set -euo pipefail
+          python3 scripts/bump-collections.py dockerfiles/collections.yml | tee bump.log
+          if git diff --quiet -- dockerfiles/collections.yml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push the bump branch
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B "$BRANCH"
+          git commit -am "Bump collections to the highest versions on Galaxy" -m "$(cat bump.log)"
+          git push --force origin "$BRANCH"
+
+      - name: Open or update the pull request, fall back to an issue
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          title='Bump collections to the highest versions on Galaxy'
+          body=$(printf 'Automated by bump-collections.yml.\n\n~~~\n%s\n~~~\n\nCI and the smoke test are dispatched on this branch, see the checks of the head commit.\n' "$(cat bump.log)")
+          if gh pr list --head "$BRANCH" --state open --json number --jq 'length' | grep -q '^0$'; then
+            if ! gh pr create --base main --head "$BRANCH" --title "$title" --body "$body"; then
+              echo "::warning::Creating pull requests is not allowed for Actions, opening an issue instead"
+              issue_body=$(printf '%s\n\nBranch %s is pushed; open the pull request by hand or run: make bump-collections\n' "$body" "$BRANCH")
+              if gh issue list --search "in:title \"$title\"" --state open --json number --jq 'length' | grep -q '^0$'; then
+                gh issue create --title "$title" --body "$issue_body"
+              else
+                gh issue comment "$(gh issue list --search "in:title \"$title\"" --state open --json number --jq '.[0].number')" --body "$issue_body"
+              fi
+            fi
+          else
+            gh pr edit "$BRANCH" --body "$body"
+          fi
+
+      # pushes with the Actions token start no workflows, so start them here
+      - name: Dispatch CI and the smoke test on the bump branch
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          gh workflow run ci.yml --ref "$BRANCH"
+          gh workflow run smoke-test.yml --ref "$BRANCH"

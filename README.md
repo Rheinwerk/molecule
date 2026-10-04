@@ -212,8 +212,11 @@ It needs `molecule` and `molecule-plugins[docker]` in the active virtualenv and 
   [dockerfiles/collections.yml](dockerfiles/collections.yml).
 
 [Dependabot](.github/dependabot.yml) opens pull requests for the GitHub Actions and for both requirements
-files; the smoke test runs each of them against a role. Dependabot has no Galaxy support, so the collections
-are bumped by hand now and then.
+files. Dependabot has no Galaxy support, so [bump-collections.yml](.github/workflows/bump-collections.yml)
+runs [scripts/bump-collections.py](scripts/bump-collections.py) weekly, pushes a `bump-collections` branch,
+opens a pull request (or an issue, if the repository does not let Actions create pull requests) and dispatches
+CI and the smoke test on it. `make bump-collections` does the same locally. The smoke test runs every bump
+against a role before it reaches the roles.
 
 # Containers
 
