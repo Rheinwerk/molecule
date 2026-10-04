@@ -1,59 +1,40 @@
 ---
-name: Molecule
+# Copy to .github/workflows/ci.yml of a role. Lint, molecule and the Galaxy release on tags
+# come from the reusable workflow in Rheinwerk/molecule, see its README.md for the inputs.
+name: CI
+
 on:
   workflow_dispatch:
+    inputs:
+      force_run:
+        description: Run molecule even if only ignored files changed
+        type: boolean
+        default: false
+      molecule_debug:
+        description: Open a tmate session right before molecule runs
+        type: boolean
+        default: false
+      args:
+        description: Additional arguments passed to molecule test
+        type: string
+        default: ''
+      molecule_ref:
+        description: Ref of Rheinwerk/molecule to take the action and scenario from
+        type: string
+        default: main
   pull_request:
   push:
   schedule:
     - cron: '30 1 * * 3'
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    outputs:
-      container_supported: ${{ steps.get_min_ansible_container_version.outputs.result }}
-    steps:
-      - name: Check out the codebase
-        uses: actions/checkout@v4
-
-      - name: Pull Lint image
-        run: docker pull -q ghcr.io/rheinwerk/molecule:lint
-
-      - name: Ansible Linting
-        run: docker run --rm -v ${GITHUB_WORKSPACE}:/git -w /git ghcr.io/rheinwerk/molecule:lint ansible-lint --force-color -p --offline /git
-
-      - name: Yaml Linting
-        run: docker run --rm -v ${GITHUB_WORKSPACE}:/git -w /git ghcr.io/rheinwerk/molecule:lint yamllint -f colored /git
-
-      - name: Get min_ansible_container_version from meta/main.yml
-        id: get_min_ansible_container_version
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq ".galaxy_info.min_ansible_container_version" ${GITHUB_WORKSPACE}/meta/main.yml
-
-  molecule:
-    name: Molecule for Ansible ${{ matrix.ansible_scenario }} / ${{ matrix.distro }} / Python ${{ matrix.python_version }}
-    runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
-    needs: lint
-    if: needs.lint.outputs.container_supported != 'X'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - distro: ubuntu-20.04
-            ansible_scenario: ansible_current
-            experimental: false
-          - distro: ubuntu-20.04
-            ansible_scenario: ansible_next
-            experimental: true
-          - distro: ubuntu-22.04
-            ansible_scenario: ansible_latest
-            experimental: true
-
-    steps:
-      - uses: Rheinwerk/molecule@main
-        with:
-          distro: ${{ matrix.distro }}
-          ansible_scenario: ${{ matrix.ansible_scenario }}
+  ci:
+    uses: Rheinwerk/molecule/.github/workflows/role.yml@main
+    with:
+      # format() turns the dispatch booleans into 'true'/'false' ('' on push, pull request and schedule)
+      force_run: ${{ format('{0}', inputs.force_run) }}
+      molecule_debug: ${{ format('{0}', inputs.molecule_debug) }}
+      args: ${{ inputs.args }}
+      molecule_ref: ${{ inputs.molecule_ref || 'main' }}
+    # passes GALAXY_API_KEY for the release job
+    secrets: inherit

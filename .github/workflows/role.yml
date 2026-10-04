@@ -1,0 +1,186 @@
+---
+# Reusable CI for Rheinwerk Ansible roles: lint, molecule matrix, Galaxy release on tags.
+# Roles call it from a short workflow, see examples/molecule.yml and README.md.
+name: Role CI
+
+on:
+  workflow_call:
+    inputs:
+      force_run:
+        description: Run molecule even if only ignored files changed ('true'/'false')
+        type: string
+        default: 'false'
+      molecule_debug:
+        description: Open a tmate session right before molecule runs ('true'/'false')
+        type: string
+        default: 'false'
+      args:
+        description: Additional arguments passed to molecule test
+        type: string
+        default: ''
+      matrix:
+        description: JSON list of matrix entries with distro, ansible_scenario and experimental
+        type: string
+        default: >-
+          [{"distro": "debian-12", "ansible_scenario": "ansible_current", "experimental": false},
+           {"distro": "debian-12", "ansible_scenario": "ansible_next", "experimental": true},
+           {"distro": "debian-12", "ansible_scenario": "ansible_latest", "experimental": true}]
+      python_version:
+        description: Python version for the molecule virtualenv
+        type: string
+        default: '3.12'
+      molecule_ref:
+        description: Ref of Rheinwerk/molecule to take the action, the scenario and the collections from
+        type: string
+        default: main
+      role_repository:
+        description: Repository of the role under test, defaults to the calling repository
+        type: string
+        default: ''
+      role_ref:
+        description: Ref of the role under test, defaults to the triggering ref
+        type: string
+        default: ''
+    secrets:
+      GALAXY_API_KEY:
+        description: Ansible Galaxy API key, used by the release job on tags only
+        required: false
+
+jobs:
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    outputs:
+      any_modified: ${{ steps.changed.outputs.any_modified }}
+    steps:
+      - name: Check out the role
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ inputs.role_repository || github.repository }}
+          ref: ${{ inputs.role_ref }}
+          fetch-depth: 0
+
+      - name: Detect changes outside the ignored files
+        id: changed
+        env:
+          FORCE_RUN: ${{ inputs.force_run }}
+          ROLE_REPOSITORY: ${{ inputs.role_repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          # Files that cannot change the role's behaviour; deletions count as changes
+          ignore='^(README\.md|LICENSE|\.gitignore|renovate\.json|\.github/dependabot\.yml|docs/.*)$'
+          forced=''
+          [ "$FORCE_RUN" = 'true' ] && forced='force_run'
+          [ -n "$ROLE_REPOSITORY" ] && forced='foreign role repository'
+          case "$EVENT_NAME" in
+            push|pull_request) ;;
+            *) forced="event $EVENT_NAME" ;;
+          esac
+          if [ -z "$forced" ] && { [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA" 2>/dev/null; }; then
+            forced='no comparable base commit'
+          fi
+          if [ -n "$forced" ]; then
+            echo "any_modified=true" >> "$GITHUB_OUTPUT"
+            echo "molecule runs: $forced"
+            exit 0
+          fi
+          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -Ev "$ignore" || true)
+          if [ -n "$changed" ]; then
+            echo "any_modified=true" >> "$GITHUB_OUTPUT"
+            echo "molecule runs, relevant changes:"
+            echo "$changed"
+          else
+            echo "any_modified=false" >> "$GITHUB_OUTPUT"
+            echo "only ignored files changed, molecule is skipped"
+          fi
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    outputs:
+      container_supported: ${{ steps.meta.outputs.container_supported }}
+    steps:
+      - name: Check out the role
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ inputs.role_repository || github.repository }}
+          ref: ${{ inputs.role_ref }}
+
+      - name: Pull lint image
+        run: docker pull -q ghcr.io/rheinwerk/molecule:lint
+
+      - name: Ansible lint
+        run: docker run --rm -v "${GITHUB_WORKSPACE}:/git" -w /git ghcr.io/rheinwerk/molecule:lint ansible-lint --force-color --offline /git
+
+      - name: YAML lint
+        run: docker run --rm -v "${GITHUB_WORKSPACE}:/git" -w /git ghcr.io/rheinwerk/molecule:lint yamllint -f colored /git
+
+      - name: Read min_ansible_container_version from meta/main.yml
+        id: meta
+        run: echo "container_supported=$(yq '.galaxy_info.min_ansible_container_version // ""' meta/main.yml)" >> "$GITHUB_OUTPUT"
+
+  molecule:
+    name: Molecule ${{ matrix.ansible_scenario }} / ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    needs: [changes, lint]
+    # min_ansible_container_version "X" in meta/main.yml marks a lint-only role
+    if: >-
+      needs.lint.outputs.container_supported != 'X'
+      && !startsWith(github.ref, 'refs/tags/')
+      && (needs.changes.outputs.any_modified == 'true' || inputs.force_run == 'true')
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.matrix) }}
+    steps:
+      # The composite action is taken from molecule_ref too, so a branch of this repository
+      # can be tested end to end (see smoke-test.yml)
+      - name: Check out the molecule action
+        uses: actions/checkout@v7
+        with:
+          repository: Rheinwerk/molecule
+          ref: ${{ inputs.molecule_ref }}
+          path: git_molecule
+
+      - name: Debugging session
+        if: inputs.molecule_debug == 'true'
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+
+      - name: Run molecule
+        uses: ./git_molecule
+        with:
+          distro: ${{ matrix.distro }}
+          ansible_scenario: ${{ matrix.ansible_scenario }}
+          python_version: ${{ inputs.python_version }}
+          molecule_args: ${{ inputs.args }}
+          molecule_ref: ${{ inputs.molecule_ref }}
+          role_repository: ${{ inputs.role_repository }}
+          role_ref: ${{ inputs.role_ref }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: lint
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Check out the role
+        uses: actions/checkout@v7
+
+      # ansible-galaxy comes with the runner image
+      - name: Trigger import of the role at Ansible Galaxy
+        env:
+          GALAXY_API_KEY: ${{ secrets.GALAXY_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GALAXY_API_KEY" ]; then
+            echo "GALAXY_API_KEY is not set, pass it with 'secrets: inherit' in the calling workflow"
+            exit 1
+          fi
+          ansible-galaxy role import --api-key "$GALAXY_API_KEY" "${GITHUB_REPOSITORY%/*}" "${GITHUB_REPOSITORY#*/}"
