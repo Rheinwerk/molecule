@@ -8,7 +8,6 @@ platforms:
     image: ghcr.io/rheinwerk/molecule:${MOLECULE_DISTRO}
     pre_build_image: true
     privileged: true
-    cgroup_parent: docker.slice
     cgroupns_mode: private
     override_command: false
     capabilities:
