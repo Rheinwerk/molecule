@@ -42,7 +42,7 @@ provisioner:
     cleanup: ${MOLECULE_PLAYBOOK_CLEANUP:-cleanup.yml}
     converge: ${MOLECULE_PLAYBOOK_CONVERGE:-converge.yml}
     destroy: ${MOLECULE_PLAYBOOK_DESTROY:-destroy.yml}
-  log: True
+  log: true
   env:
     ANSIBLE_ROLES_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:$MOLECULE_PROJECT_DIRECTORY/roles
 verifier:

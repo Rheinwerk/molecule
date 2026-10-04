@@ -1,0 +1,14 @@
+---
+extends: default
+
+rules:
+  octal-values: {forbid-implicit-octal: true, forbid-explicit-octal: true}
+  comments: {min-spaces-from-content: 1}
+  document-start: disable
+  line-length: disable
+  truthy:
+    allowed-values: ["true", "false", "yes", "no"]
+    check-keys: false
+
+ignore: |
+  examples/Makefile
