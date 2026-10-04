@@ -146,7 +146,13 @@ because of `when: "'molecule-idempotence-notest' not in ansible_skip_tags"`.
 ## Converge override
 
 Instead of replacing `converge.yml`, a role can ship `molecule/default/converge_override.yml` with tasks
-that the shared converge includes before the role runs.
+that the shared converge includes before the role runs. It is a task list, not a playbook; tell ansible-lint
+so in the role's `.ansible-lint`, otherwise its syntax check fails on it:
+
+```yaml
+kinds:
+  - tasks: "**/molecule/default/converge_override.yml"
+```
 
 ## Disable the idempotence check
 
