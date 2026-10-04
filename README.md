@@ -204,20 +204,32 @@ It needs `molecule` and `molecule-plugins[docker]` in the active virtualenv and 
 
 # Pinned versions
 
-- `molecule` and `molecule-plugins` are pinned in [requirements/molecule.txt](requirements/molecule.txt), which
-  the action installs. Molecule installed the newest version before, and a new molecule-plugins release broke
-  every role run in 2026 by rejecting a key in the shared `molecule.yml`. The `molecule_version` and
-  `molecule_plugins_version` inputs override the pins for a single run.
-- The tools of the lint image are pinned in [dockerfiles/lint-requirements.txt](dockerfiles/lint-requirements.txt).
+- `molecule` and `molecule-plugins` are pinned in
+  [requirements/requirements-molecule.txt](requirements/requirements-molecule.txt), which the action installs.
+  Molecule installed the newest version before, and a new molecule-plugins release broke every role run in
+  2026 by rejecting a key in the shared `molecule.yml`. The `molecule_version` and `molecule_plugins_version`
+  inputs override the pins for a single run.
+- The tools of the lint image are pinned in [dockerfiles/requirements-lint.txt](dockerfiles/requirements-lint.txt).
 - The Ansible collections for the molecule runs and the lint image are pinned in
   [dockerfiles/collections.yml](dockerfiles/collections.yml).
 
-[Dependabot](.github/dependabot.yml) opens pull requests for the GitHub Actions and for both requirements
-files. Dependabot has no Galaxy support, so [bump-collections.yml](.github/workflows/bump-collections.yml)
-runs [scripts/bump-collections.py](scripts/bump-collections.py) weekly, pushes a `bump-collections` branch,
-opens a pull request (or an issue, if the repository does not let Actions create pull requests) and dispatches
-CI and the smoke test on it. `make bump-collections` does the same locally. The smoke test runs every bump
-against a role before it reaches the roles.
+[Renovate](renovate.json) keeps all three and the GitHub Actions current; every bump of the molecule pins or
+the collections runs the smoke test before it can be merged.
+
+# Renovate preset for the roles
+
+[default.json](default.json) is the shared preset for all Rheinwerk roles. A role's `renovate.json` is just
+
+```json
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>Rheinwerk/molecule"]
+}
+```
+
+It brings `config:recommended` without semantic commit prefixes, the `dependencies` label, one grouped pull
+request for GitHub Actions updates and one for Ansible collections and roles from `requirements.yml`. Roles
+pinned to git tags, as in the CenterDevice infrastructure, are updated through Renovate's git-tags datasource.
 
 # Containers
 
