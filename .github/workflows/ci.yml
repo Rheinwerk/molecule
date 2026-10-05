@@ -1,0 +1,33 @@
+---
+# Lints this repository: scenarios (ansible-lint, yamllint) and workflows (actionlint)
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v7
+
+      - name: Pull lint image
+        run: docker pull -q ghcr.io/rheinwerk/molecule:lint
+
+      - name: Ansible lint scenarios
+        run: docker run --rm -v "${GITHUB_WORKSPACE}:/git" -w /git ghcr.io/rheinwerk/molecule:lint ansible-lint --force-color --offline /git
+
+      - name: YAML lint
+        run: docker run --rm -v "${GITHUB_WORKSPACE}:/git" -w /git ghcr.io/rheinwerk/molecule:lint yamllint -f colored /git
+
+      # ./git_molecule in role.yml is checked out at runtime, actionlint cannot see it
+      - name: Workflow lint
+        run: docker run --rm -v "${GITHUB_WORKSPACE}:/repo" -w /repo rhysd/actionlint:1.7.12 -color -ignore 'could not read action metadata'

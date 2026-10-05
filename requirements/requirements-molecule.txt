@@ -1,0 +1,9 @@
+# Installed by action.yml into the molecule virtualenv (ansible-core and Jinja2 come from the
+# scenario inputs). Pinned on purpose: Renovate opens pull requests for new versions, the smoke
+# test runs them against a role before they reach all roles.
+molecule==26.9.0
+molecule-plugins[docker]==26.9.28
+docker
+netaddr
+jmespath
+dnspython

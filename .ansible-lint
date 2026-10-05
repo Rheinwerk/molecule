@@ -1,0 +1,10 @@
+---
+# Lints the shared molecule scenarios (see .github/workflows/ci.yml)
+offline: true
+exclude_paths:
+  - .github/
+  - dockerfiles/
+  - examples/
+skip_list:
+  - name[template]
+  - yaml

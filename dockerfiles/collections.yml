@@ -1,0 +1,31 @@
+---
+# Collections installed for molecule runs (action.yml) and baked into the lint image (dockerfiles/Lint).
+# Pinned on purpose: Renovate (ansible-galaxy manager, see renovate.json) opens pull requests for new
+# versions, the smoke test runs them against a role.
+collections:
+  - name: amazon.aws
+    version: 11.4.0
+  - name: ansible.mysql
+    version: 5.2.0
+  - name: ansible.netcommon
+    version: 8.7.1
+  - name: ansible.posix
+    version: 2.2.2
+  - name: ansible.utils
+    version: 6.1.1
+  - name: community.aws
+    version: 11.1.0
+  - name: community.crypto
+    version: 3.5.0
+  - name: community.docker
+    version: 5.4.0
+  - name: community.general
+    version: 13.4.0
+  - name: community.mongodb
+    version: 1.8.0
+  - name: community.postgresql
+    version: 5.0.0
+  - name: community.rabbitmq
+    version: 1.7.0
+  - name: victoriametrics.cluster
+    version: 2.56.0

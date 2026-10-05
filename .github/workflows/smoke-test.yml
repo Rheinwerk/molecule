@@ -1,0 +1,44 @@
+---
+# Runs the reusable role workflow against a small reference role with the action, the scenario
+# and the collections of THIS ref, so changes are tested here before they reach all roles via @main.
+name: Smoke test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - action.yml
+      - dockerfiles/collections.yml
+      - requirements/requirements-molecule.txt
+      - scenarios/**
+      - .github/workflows/role.yml
+      - .github/workflows/smoke-test.yml
+  push:
+    branches:
+      - main
+    paths:
+      - action.yml
+      - dockerfiles/collections.yml
+      - requirements/requirements-molecule.txt
+      - scenarios/**
+      - .github/workflows/role.yml
+      - .github/workflows/smoke-test.yml
+
+concurrency:
+  group: smoke-test-${{ github.ref }}
+  cancel-in-progress: true
+
+# The reference role's playbooks run on the runner: keep the token read-only
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  transparent-hugepage-setup:
+    uses: ./.github/workflows/role.yml
+    with:
+      role_repository: Rheinwerk/ansible-role-transparent_hugepage_setup
+      # pinned fixture, not a moving branch: this tests the scenario, not the role
+      role_ref: 5dcd72f6d5f0ea9e110f13ee6d6c987f2c6ff585
+      # molecule always runs for a foreign role repository, no force_run needed
+      molecule_ref: ${{ github.event.pull_request.head.sha || github.sha }}

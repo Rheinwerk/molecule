@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>Rheinwerk/molecule"
+  ],
+  "ansible-galaxy": {
+    "description": "The pinned collections for the molecule runs and the lint image",
+    "managerFilePatterns": [
+      "/^dockerfiles/collections\\.ya?ml$/"
+    ]
+  }
+}

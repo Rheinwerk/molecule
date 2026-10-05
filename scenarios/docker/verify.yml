@@ -1,10 +1,9 @@
 ---
-# This is an example playbook to execute Ansible tests.
-
+# Placeholder, roles ship their own molecule/default/verify.yml (rsync --ignore-existing keeps it)
 - name: Verify
   hosts: all
   gather_facts: false
   tasks:
-  - name: Example assertion
-    assert:
-      that: true
+    - name: Example assertion
+      ansible.builtin.assert:
+        that: true
