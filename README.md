@@ -58,8 +58,9 @@ The default matrix is
 ```
 
 `distro` is a tag of `ghcr.io/rheinwerk/molecule`, `ansible_scenario` one of `ansible_current`,
-`ansible_next`, `ansible_latest` (the Ansible versions are defined in [action.yml](action.yml)) or empty
-for the newest Ansible, `experimental: true` lets the job fail without failing the run. Pass your own list
+`ansible_next`, `ansible_latest` or empty for the newest Ansible. `ansible_current` is the ansible-core line the
+infrastructure runs, `ansible_next` the line after it; both are input defaults in [action.yml](action.yml) and are
+bumped by hand when the infrastructure moves, `experimental: true` lets the job fail without failing the run. Pass your own list
 as the `matrix` input to add or remove entries.
 
 ### Lint only, no molecule
@@ -234,7 +235,8 @@ the collections runs the smoke test before it can be merged.
 ```
 
 It brings `config:recommended` without semantic commit prefixes, the `dependencies` label, one grouped pull
-request for GitHub Actions updates and one for Ansible collections and roles from `requirements.yml`. Roles
+request for GitHub Actions updates, merged automatically once the role's CI is green, and one for Ansible
+collections and roles from `requirements.yml`, which stays for review. Roles
 pinned to git tags, as in the CenterDevice infrastructure, are updated through Renovate's git-tags datasource.
 
 # Containers

@@ -8,5 +8,14 @@
     "managerFilePatterns": [
       "/^dockerfiles/collections\\.ya?ml$/"
     ]
-  }
+  },
+  "packageRules": [
+    {
+      "description": "The lint image tools are released together (ansible-lint pins black), bump them in one pull request",
+      "matchFileNames": [
+        "dockerfiles/requirements-lint.txt"
+      ],
+      "groupName": "lint image"
+    }
+  ]
 }

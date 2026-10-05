@@ -10,11 +10,12 @@
   ],
   "packageRules": [
     {
-      "description": "One pull request for all GitHub Actions updates",
+      "description": "One pull request for all GitHub Actions updates, merged automatically once the CI is green",
       "matchManagers": [
         "github-actions"
       ],
-      "groupName": "github actions"
+      "groupName": "github actions",
+      "automerge": true
     },
     {
       "description": "One pull request for all Ansible collections and roles (requirements.yml, galaxy.yml)",

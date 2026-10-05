@@ -5,7 +5,6 @@ REGISTRY := ghcr.io
 NAMESPACE := rheinwerk/molecule
 PLATFORMS := linux/amd64,linux/arm64
 CONTEXT := dockerfiles
-ANSIBLE_VERSION := 2.18.5
 
 # Image tags
 LINT_IMAGE := $(REGISTRY)/$(NAMESPACE):lint
@@ -21,16 +20,16 @@ help:
 	@echo "Available targets:"
 	@echo "  build-all          - Build all images locally"
 	@echo "  build-lint         - Build lint image"
-	@echo "  build-debian-12    - Build Debian 12 (Bookworm) image with ansible"
-	@echo "  build-debian-13    - Build Debian 13 (Trixie) image with ansible"
-	@echo "  build-ubuntu-22-04 - Build Ubuntu 22.04 (Jammy) image with ansible"
-	@echo "  build-ubuntu-24-04 - Build Ubuntu 24.04 (Noble) image with ansible"
+	@echo "  build-debian-12    - Build Debian 12 (Bookworm) image"
+	@echo "  build-debian-13    - Build Debian 13 (Trixie) image"
+	@echo "  build-ubuntu-22-04 - Build Ubuntu 22.04 (Jammy) image"
+	@echo "  build-ubuntu-24-04 - Build Ubuntu 24.04 (Noble) image"
 	@echo "  push-all           - Build and push all images to registry"
 	@echo "  push-lint          - Build and push lint image"
-	@echo "  push-debian-12     - Build and push Debian 12 image with ansible"
-	@echo "  push-debian-13     - Build and push Debian 13 image with ansible"
-	@echo "  push-ubuntu-22-04  - Build and push Ubuntu 22.04 image with ansible"
-	@echo "  push-ubuntu-24-04  - Build and push Ubuntu 24.04 image with ansible"
+	@echo "  push-debian-12     - Build and push Debian 12 image"
+	@echo "  push-debian-13     - Build and push Debian 13 image"
+	@echo "  push-ubuntu-22-04  - Build and push Ubuntu 22.04 image"
+	@echo "  push-ubuntu-24-04  - Build and push Ubuntu 24.04 image"
 	@echo "  clean              - Clean up Docker build cache"
 	@echo "  help               - Show this help message"
 
@@ -63,20 +62,18 @@ build-debian-13:
 		$(CONTEXT)
 
 build-ubuntu-22-04:
-	@echo "Building Ubuntu 22.04 (Jammy) image with ansible..."
+	@echo "Building Ubuntu 22.04 (Jammy) image..."
 	docker buildx build \
 		--build-arg OS_VERSION=22.04 \
-		--build-arg ANSIBLE_VERSION=$(ANSIBLE_VERSION) \
 		--file $(CONTEXT)/Ubuntu \
 		--tag $(UBUNTU_22_04_IMAGE) \
 		--load \
 		$(CONTEXT)
 
 build-ubuntu-24-04:
-	@echo "Building Ubuntu 24.04 (Noble) image with ansible..."
+	@echo "Building Ubuntu 24.04 (Noble) image..."
 	docker buildx build \
 		--build-arg OS_VERSION=24.04 \
-		--build-arg ANSIBLE_VERSION=$(ANSIBLE_VERSION) \
 		--file $(CONTEXT)/Ubuntu \
 		--tag $(UBUNTU_24_04_IMAGE) \
 		--load \
@@ -116,22 +113,20 @@ push-debian-13:
 		$(CONTEXT)
 
 push-ubuntu-22-04:
-	@echo "Building and pushing Ubuntu 22.04 (Jammy) image with ansible (multi-platform)..."
+	@echo "Building and pushing Ubuntu 22.04 (Jammy) image (multi-platform)..."
 	docker buildx build \
 		--platform $(PLATFORMS) \
 		--build-arg OS_VERSION=22.04 \
-		--build-arg ANSIBLE_VERSION=$(ANSIBLE_VERSION) \
 		--file $(CONTEXT)/Ubuntu \
 		--tag $(UBUNTU_22_04_IMAGE) \
 		--push \
 		$(CONTEXT)
 
 push-ubuntu-24-04:
-	@echo "Building and pushing Ubuntu 24.04 (Noble) image with ansible (multi-platform)..."
+	@echo "Building and pushing Ubuntu 24.04 (Noble) image (multi-platform)..."
 	docker buildx build \
 		--platform $(PLATFORMS) \
 		--build-arg OS_VERSION=24.04 \
-		--build-arg ANSIBLE_VERSION=$(ANSIBLE_VERSION) \
 		--file $(CONTEXT)/Ubuntu \
 		--tag $(UBUNTU_24_04_IMAGE) \
 		--push \
