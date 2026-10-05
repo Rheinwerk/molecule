@@ -10,10 +10,10 @@ inputs:
     default: ''
   ansible_current_version:
     description: Ansible version to use for 'ansible_current' scenario, the line the infrastructure runs
-    default: '==2.20.*'
+    default: '==2.19.*'
   ansible_next_version:
     description: Ansible version to use for 'ansible_next' scenario, the line after ansible_current
-    default: '==2.21.*'
+    default: '==2.20.*'
   ansible_version:
     description: Ansible version to use, leave empty for newest
     default: ''
