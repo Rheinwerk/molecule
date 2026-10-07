@@ -4,7 +4,7 @@
 # versions, the smoke test runs them against a role.
 collections:
   - name: amazon.aws
-    version: 11.4.0
+    version: 11.5.0
   - name: ansible.mysql
     version: 5.2.0
   - name: ansible.netcommon
@@ -14,13 +14,13 @@ collections:
   - name: ansible.utils
     version: 6.1.1
   - name: community.aws
-    version: 11.1.0
+    version: 11.2.0
   - name: community.crypto
     version: 3.5.0
   - name: community.docker
     version: 5.4.0
   - name: community.general
-    version: 13.4.0
+    version: 13.5.0
   - name: community.mongodb
     version: 1.8.0
   - name: community.postgresql
