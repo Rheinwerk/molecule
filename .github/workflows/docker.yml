@@ -24,7 +24,7 @@ env:
 
 jobs:
   docker:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
