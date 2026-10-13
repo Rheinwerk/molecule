@@ -36,6 +36,7 @@ RUN if [ "${OS_VERSION}" = "12" ]; then python=python3.12; extra=software-proper
       "${python}" \
       "${python}-venv" \
       python3-apt \
+      python3-cryptography \
       python3-pip \
       python3-setuptools \
       python3-simplejson \
