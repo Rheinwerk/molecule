@@ -249,10 +249,12 @@ and arm64, published as `ghcr.io/rheinwerk/molecule:<tag>`.
 Alpine with `ansible-core`, `ansible-lint`, `yamllint`, `black` (pip, pinned) and `shellcheck`, plus the
 pinned collections so `ansible-lint --offline` resolves FQCNs.
 
-## debian-12
+## debian-12, debian-13
 
-The molecule test target ([dockerfiles/CI](dockerfiles/CI)): Debian 12 with systemd, Python 3.12 (via
-[pascalroeleven's backport](https://github.com/pascallj/python3.12-backport)), cron, dnsmasq, rsyslog.
+The molecule test targets ([dockerfiles/CI](dockerfiles/CI)): Debian with systemd, cron, dnsmasq, rsyslog.
+Debian 12 gets Python 3.12 via [pascalroeleven's backport](https://github.com/pascallj/python3.12-backport)
+and `software-properties-common`; Debian 13 uses its own Python 3.13 and has no
+`software-properties-common` any more. A role tests Debian 13 by adding `debian-13` to its `matrix` input.
 
 ## pkr-debian-12, pkr-debian-13, pkr-ubuntu-2204, pkr-ubuntu-2404
 

@@ -38,6 +38,9 @@ jobs:
           - dockerfile: dockerfiles/CI
             image_tag: debian-12
             os_version: "12"
+          - dockerfile: dockerfiles/CI
+            image_tag: debian-13
+            os_version: "13"
           - dockerfile: dockerfiles/Debian
             image_tag: pkr-debian-12
             os_version: "12"
