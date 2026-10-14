@@ -18,6 +18,9 @@ RUN apt-get update \
       fi
 
 # Install dependencies. software-properties-common is gone in Debian 13.
+# The apt module takes the cache age from update-success-stamp or the mtime of the lists
+# directory; both are reset to old values, or cache_valid_time in a converge skips the
+# update right after an image build and finds no package lists.
 RUN if [ "${OS_VERSION}" = "12" ]; then python=python3.12; extra=software-properties-common; else python=python3; extra=""; fi \
    && apt-get update \
    && apt-get install -y --no-install-recommends \
@@ -57,6 +60,8 @@ RUN if [ "${OS_VERSION}" = "12" ]; then python=python3.12; extra=software-proper
    && rm -f /etc/apt/keyrings/deb-pascalroeleven.gpg \
    && apt-get clean \
    && rm -Rf /var/lib/apt/lists/* \
+   && rm -f /var/lib/apt/periodic/update-success-stamp \
+   && touch -d @0 /var/lib/apt/lists \
    && rm -Rf /usr/share/doc && find /usr/share/man -type f -delete \
    && rm -rf /tmp/* /var/tmp/* \
    && rm -rf /lib/systemd/system/multi-user.target.wants/* \

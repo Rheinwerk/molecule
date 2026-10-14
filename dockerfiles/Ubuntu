@@ -4,6 +4,7 @@ FROM ubuntu:${OS_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Old apt cache stamps, so cache_valid_time in a converge still updates the package lists
 RUN apt-get update \
    && apt-get install -y --no-install-recommends \
       ca-certificates \
@@ -19,6 +20,8 @@ RUN apt-get update \
       wget \
    && apt-get clean \
    && rm -Rf /var/lib/apt/lists/* \
+   && rm -f /var/lib/apt/periodic/update-success-stamp \
+   && touch -d @0 /var/lib/apt/lists \
    && rm -Rf /usr/share/doc && find /usr/share/man -type f -delete \
    && rm -rf /tmp/* /var/tmp/* ; \
       rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
