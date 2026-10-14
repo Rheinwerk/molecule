@@ -10,10 +10,12 @@ inputs:
     default: ''
   ansible_current_version:
     description: Ansible version to use for 'ansible_current' scenario, the line the infrastructure runs
-    default: '==2.19.*'
+    default: '==2.21.*'
   ansible_next_version:
-    description: Ansible version to use for 'ansible_next' scenario, the line after ansible_current
-    default: '==2.20.*'
+    description: >-
+      Ansible version to use for 'ansible_next' scenario, the line after ansible_current
+      (pip takes its pre-releases until the first release; 2.22 needs Python >= 3.13)
+    default: '==2.22.*'
   ansible_version:
     description: Ansible version to use, leave empty for newest
     default: ''
@@ -178,6 +180,9 @@ runs:
         ANSIBLE_ROLES_PATH: "${GITHUB_WORKSPACE}"
         ANSIBLE_ASYNC_DIR: "/tmp/.ansible_async"
         ANSIBLE_FORCE_COLOR: '1'
+        # ansible-core 2.24 removes facts as top-level ansible_<fact> variables; test without
+        # them now, so a role reads ansible_facts['<fact>'] or fails here
+        ANSIBLE_INJECT_FACT_VARS: 'False'
         ANSIBLE_VERBOSITY: '2'
         CI_JOB_ID: "${{ github.run_id }}"
         GITHUB_ACTOR: "${{ github.actor }}"
