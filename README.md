@@ -27,8 +27,10 @@ jobs:
 1. **Changes**: decides whether molecule has to run. Changes to `README.md`, `LICENSE`, `.gitignore`,
    `renovate.json` and `docs/` alone skip it; deletions count as changes.
 2. **Lint**: `ansible-lint --offline` and `yamllint` in `ghcr.io/rheinwerk/molecule:lint`. Always runs.
-3. **Molecule**: one job per matrix entry, by default `debian-12` with the `ansible_current`, `ansible_next`
-   and `ansible_latest` scenarios. `ansible_next` and `ansible_latest` are experimental and may fail.
+3. **Molecule**: one job per matrix entry, by default `ansible_current` on `debian-12` and `debian-13`, plus
+   `ansible_next` and `ansible_latest` on `debian-13`. `ansible_next` and `ansible_latest` are experimental
+   and may fail. Facts are not injected as variables (`ANSIBLE_INJECT_FACT_VARS=False`, the behaviour of
+   ansible-core 2.24): roles read `ansible_facts['<fact>']`, an `ansible_<fact>` variable fails the run.
 4. **Release**: on a tag push, triggers the import of the role at Ansible Galaxy.
 
 ## Inputs
@@ -39,7 +41,7 @@ jobs:
 | `molecule_debug` | `'false'` | Open a [tmate](https://github.com/mxschmitt/action-tmate) session right before molecule runs |
 | `args` | `''` | Additional arguments for `molecule test` |
 | `matrix` | see below | JSON list of matrix entries |
-| `python_version` | `'3.12'` | Python version for the molecule virtualenv |
+| `python_version` | `'3.12'` | Python version for the molecule virtualenv, unless the matrix entry sets `python_version` |
 | `molecule_ref` | `main` | Ref of this repository to take the action, the scenario and the collections from |
 | `role_repository` | calling repository | Repository of the role under test (used by the smoke test) |
 | `role_ref` | triggering ref | Ref of the role under test |
@@ -53,15 +55,18 @@ The default matrix is
 
 ```json
 [{"distro": "debian-12", "ansible_scenario": "ansible_current", "experimental": false},
- {"distro": "debian-12", "ansible_scenario": "ansible_next", "experimental": true},
- {"distro": "debian-12", "ansible_scenario": "ansible_latest", "experimental": true}]
+ {"distro": "debian-13", "ansible_scenario": "ansible_current", "experimental": false, "python_version": "3.13"},
+ {"distro": "debian-13", "ansible_scenario": "ansible_next", "experimental": true, "python_version": "3.13"},
+ {"distro": "debian-13", "ansible_scenario": "ansible_latest", "experimental": true, "python_version": "3.13"}]
 ```
 
 `distro` is a tag of `ghcr.io/rheinwerk/molecule`, `ansible_scenario` one of `ansible_current`,
 `ansible_next`, `ansible_latest` or empty for the newest Ansible. `ansible_current` is the ansible-core line the
-infrastructure runs, `ansible_next` the line after it; both are input defaults in [action.yml](action.yml) and are
-bumped by hand when the infrastructure moves, `experimental: true` lets the job fail without failing the run. Pass your own list
-as the `matrix` input to add or remove entries.
+infrastructure runs (`==2.21.*`), `ansible_next` the line after it (`==2.22.*`; pip takes its pre-releases until the
+first release); both are input defaults in [action.yml](action.yml) and are bumped by hand when the infrastructure
+moves, `experimental: true` lets the job fail without failing the run. `python_version` follows the Ansible
+virtualenv of the images: 3.12 on Debian 12, 3.13 on Debian 13. ansible-core 2.22 needs Python 3.13, so 2.21 is the
+last line that runs on Debian 12. Pass your own list as the `matrix` input to add or remove entries.
 
 ### Lint only, no molecule
 
@@ -127,7 +132,7 @@ Create `molecule/default/converge.yml` inside the repository with following cont
         cache_valid_time: 600
       register: result
       until: result is succeeded
-      when: ansible_os_family == 'Debian'
+      when: ansible_facts['os_family'] == 'Debian'
 
     # skip idempotence tests
     - name: Include Example install role
@@ -254,7 +259,8 @@ pinned collections so `ansible-lint --offline` resolves FQCNs.
 The molecule test targets ([dockerfiles/CI](dockerfiles/CI)): Debian with systemd, cron, dnsmasq, rsyslog.
 Debian 12 gets Python 3.12 via [pascalroeleven's backport](https://github.com/pascallj/python3.12-backport)
 and `software-properties-common`; Debian 13 uses its own Python 3.13 and has no
-`software-properties-common` any more. A role tests Debian 13 by adding `debian-13` to its `matrix` input.
+`software-properties-common` any more. The default matrix tests both; a role that does not support one of
+them passes its own `matrix` input.
 
 ## pkr-debian-12, pkr-debian-13, pkr-ubuntu-2204, pkr-ubuntu-2404
 

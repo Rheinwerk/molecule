@@ -18,15 +18,20 @@ on:
         description: Additional arguments passed to molecule test
         type: string
         default: ''
+      # python_version per entry follows the image's Ansible virtualenv (Debian 12: 3.12,
+      # Debian 13: 3.13); ansible-core 2.22 needs Python >= 3.13
       matrix:
-        description: JSON list of matrix entries with distro, ansible_scenario and experimental
+        description: >-
+          JSON list of matrix entries with distro, ansible_scenario, experimental and
+          optionally python_version (default: the python_version input)
         type: string
         default: >-
           [{"distro": "debian-12", "ansible_scenario": "ansible_current", "experimental": false},
-           {"distro": "debian-12", "ansible_scenario": "ansible_next", "experimental": true},
-           {"distro": "debian-12", "ansible_scenario": "ansible_latest", "experimental": true}]
+           {"distro": "debian-13", "ansible_scenario": "ansible_current", "experimental": false, "python_version": "3.13"},
+           {"distro": "debian-13", "ansible_scenario": "ansible_next", "experimental": true, "python_version": "3.13"},
+           {"distro": "debian-13", "ansible_scenario": "ansible_latest", "experimental": true, "python_version": "3.13"}]
       python_version:
-        description: Python version for the molecule virtualenv
+        description: Python version for the molecule virtualenv, unless the matrix entry sets one
         type: string
         default: '3.12'
       molecule_ref:
@@ -162,7 +167,7 @@ jobs:
         with:
           distro: ${{ matrix.distro }}
           ansible_scenario: ${{ matrix.ansible_scenario }}
-          python_version: ${{ inputs.python_version }}
+          python_version: ${{ matrix.python_version || inputs.python_version }}
           molecule_args: ${{ inputs.args }}
           molecule_ref: ${{ inputs.molecule_ref }}
           role_repository: ${{ inputs.role_repository }}
