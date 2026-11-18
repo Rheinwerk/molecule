@@ -1,0 +1,120 @@
+---
+# Starts one EC2 instance per platform. Needs AWS credentials in the environment (role-ec2.yml gets
+# them via OIDC) that may run, tag, describe and terminate instances; nothing else is created.
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: "{{ molecule_no_log }}"
+  vars:
+    ec2_key_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/id_ed25519"
+    ec2_tags:
+      Purpose: molecule
+      molecule-repository: "{{ lookup('env', 'GITHUB_REPOSITORY') | default('local', true) }}"
+      molecule-run: "{{ lookup('env', 'GITHUB_RUN_ID') | default(lookup('env', 'CI_JOB_ID'), true) }}"
+  tasks:
+    - name: Check the platform settings
+      ansible.builtin.assert:
+        that:
+          - item.vpc_subnet_id | length > 0
+          - item.security_group_id | length > 0
+        fail_msg: "{{ item.name }}: set MOLECULE_EC2_SUBNET_ID and MOLECULE_EC2_SECURITY_GROUP_ID"
+        quiet: true
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Generate the SSH key of this run
+      community.crypto.openssh_keypair:
+        path: "{{ ec2_key_path }}"
+        type: ed25519
+        regenerate: never
+      register: ec2_keypair
+
+    - name: Find the images
+      amazon.aws.ec2_ami_info:
+        region: "{{ item.region }}"
+        owners:
+          - self
+        filters: "{{ ec2_name_filter | combine(ec2_env_filter) }}"
+      vars:
+        ec2_name_filter:
+          name: "{{ item.image_name }}"
+          state: available
+        ec2_env_filter: "{{ {'tag:Env': item.image_env_tag} if item.image_env_tag | length > 0 else {} }}"
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: ec2_images
+
+    - name: Check that every platform has an image
+      ansible.builtin.assert:
+        that:
+          - item.images | length > 0
+        fail_msg: "No available image {{ item.item.image_name }} owned by this account in {{ item.item.region }}"
+        quiet: true
+      loop: "{{ ec2_images.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Start the instances
+      amazon.aws.ec2_instance:
+        region: "{{ item.region }}"
+        name: "{{ item.name }}"
+        image_id: "{{ (ec2_images.results[index].images | sort(attribute='creation_date') | last).image_id }}"
+        instance_type: "{{ item.instance_type }}"
+        network_interfaces:
+          - device_index: 0
+            subnet_id: "{{ item.vpc_subnet_id }}"
+            groups:
+              - "{{ item.security_group_id }}"
+            assign_public_ip: "{{ item.assign_public_ip }}"
+        # shutdown -h on the instance (max_lifetime_minutes) terminates it
+        instance_initiated_shutdown_behavior: terminate
+        metadata_options:
+          http_endpoint: enabled
+          http_tokens: required
+        tags: "{{ ec2_tags }}"
+        user_data: "{{ lookup('ansible.builtin.template', 'templates/user-data.yml.j2') }}"
+        state: running
+        wait: true
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        index_var: index
+        label: "{{ item.name }}"
+      register: ec2_instances
+
+    - name: Collect the instance config
+      ansible.builtin.set_fact:
+        ec2_instance_config: "{{ ec2_instance_config | default([]) + [ec2_entry] }}"
+      vars:
+        ec2_platform: "{{ item.item }}"
+        ec2_instance: "{{ item.instances[0] }}"
+        ec2_entry:
+          instance: "{{ ec2_platform.name }}"
+          address: "{{ ec2_instance.public_ip_address if ec2_platform.assign_public_ip else ec2_instance.private_ip_address }}"
+          user: "{{ ec2_platform.ssh_user }}"
+          port: 22
+          identity_file: "{{ ec2_key_path }}"
+          instance_ids:
+            - "{{ ec2_instance.instance_id }}"
+      loop: "{{ ec2_instances.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    # the default driver reads address, user, port and identity_file from here
+    - name: Write the instance config
+      ansible.builtin.copy:
+        dest: "{{ molecule_instance_config }}"
+        content: "{{ ec2_instance_config | to_nice_yaml }}"
+        mode: "0600"
+
+    - name: Wait for SSH
+      ansible.builtin.wait_for:
+        host: "{{ item.address }}"
+        port: "{{ item.port }}"
+        search_regex: SSH
+        timeout: 300
+      loop: "{{ ec2_instance_config }}"
+      loop_control:
+        label: "{{ item.instance }}"

@@ -1,0 +1,54 @@
+# Terminates molecule EC2 instances (tag Purpose: molecule) that outlived a run, for runs whose destroy
+# never happened and whose instance did not shut itself down. The AWS role trusts this file on main
+# by path (job_workflow_ref), like role-ec2.yml.
+name: EC2 cleanup
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ec2-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Terminate old molecule instances
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_REGION: ${{ vars.MOLECULE_EC2_REGION || 'eu-central-1' }}
+      MAX_AGE_HOURS: '2'
+    steps:
+      # pinned to a commit: this action handles the AWS credentials (Renovate updates digest and comment)
+      - name: Get AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.MOLECULE_EC2_ROLE_ARN }}
+          role-session-name: molecule-cleanup-${{ github.run_id }}
+          aws-region: ${{ vars.MOLECULE_EC2_REGION || 'eu-central-1' }}
+          mask-aws-account-id: true
+
+      # the AWS CLI comes with the runner image
+      - name: Terminate instances older than MAX_AGE_HOURS
+        run: |
+          set -euo pipefail
+          cutoff=$(date -u -d "-${MAX_AGE_HOURS} hours" +%Y-%m-%dT%H:%M:%SZ)
+          ids=$(aws ec2 describe-instances \
+            --filters 'Name=tag:Purpose,Values=molecule' \
+                      'Name=instance-state-name,Values=pending,running,stopping,stopped' \
+            --query "Reservations[].Instances[?LaunchTime<'${cutoff}'].InstanceId" \
+            --output text)
+          if [ -z "$ids" ]; then
+            echo "no molecule instance launched before ${cutoff}"
+            exit 0
+          fi
+          echo "terminating (launched before ${cutoff}): ${ids}"
+          # word splitting of ids is intended (one argument per instance)
+          # shellcheck disable=SC2086
+          aws ec2 terminate-instances --instance-ids $ids --query 'TerminatingInstances[].InstanceId' --output text

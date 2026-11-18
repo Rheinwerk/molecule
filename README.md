@@ -190,6 +190,66 @@ Tag the task with `molecule-idempotence-notest`:
     - molecule-idempotence-notest
 ```
 
+# EC2 scenario
+
+[scenarios/ec2](scenarios/ec2) runs the role on a real EC2 instance started from the newest baseimage AMI
+of the AWS account, for roles a container cannot test. It runs on demand only, through the reusable
+workflow [role-ec2.yml](.github/workflows/role-ec2.yml); a role adds
+[examples/molecule-ec2.yml](examples/molecule-ec2.yml) as `.github/workflows/ci-ec2.yml` next to its
+normal CI. The AWS side comes from the organisation: the secret `MOLECULE_EC2_ROLE_ARN` (a secret so the
+account ID stays out of the public logs) and the variables `MOLECULE_EC2_SUBNET_ID` and
+`MOLECULE_EC2_SECURITY_GROUP_ID`.
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| secret `MOLECULE_EC2_ROLE_ARN` | required | IAM role assumed via GitHub OIDC |
+| `subnet_id` | required | Subnet for the instances |
+| `security_group_id` | required | Security group for the instances |
+| `aws_region` | `eu-central-1` | Region of the subnet and the AMIs |
+| `image_env` | `staging` | Value of the AMIs' `Env` tag, empty for any |
+| `args` | `''` | Additional arguments for `molecule test` |
+| `matrix` | `debian-13`, `ansible_current` | JSON list as for `role.yml`, plus optional `arch` (`amd64`) and `instance_type` (`t3.small`; use `t4g` for `arm64`) |
+| `python_version`, `molecule_ref`, `role_repository`, `role_ref` | | as for `role.yml` |
+
+What a run does:
+
+1. `create.yml` picks the newest available AMI named `baseimage_<distro>-*-<arch>` (for example
+   `baseimage_debian13-*-amd64`) owned by the account and starts one instance with a public IP, IMDSv2 only,
+   no instance profile and the tags `Name`, `Purpose: molecule`, `molecule-repository` and `molecule-run`.
+   It creates no security group, key pair or IAM resource. The SSH key of the run goes to the image's
+   default user (`cd-admin`) through cloud-init.
+2. At boot, before sshd starts, [wipe-image-secrets.sh](scenarios/ec2/files/wipe-image-secrets.sh)
+   removes what the image ships for production use: the host keys and host certificates configured in
+   sshd (the instance gets fresh host keys), the apt credentials and the apt sources that need them.
+   `prepare.yml` stops the run if any of it is still there. The files are deleted, not overwritten: this
+   keeps them out of the public CI logs by accident (diff output, verbosity), it does not stop a role that
+   reads the deleted blocks from the disk on purpose.
+3. converge, idempotence and verify run as in the docker scenario, over SSH as `cd-admin` with `become`.
+4. `destroy.yml` terminates the instances by their `Name` tag. If it never runs, the instance shuts itself
+   down after 90 minutes and the shutdown terminates it, and [ec2-cleanup.yml](.github/workflows/ec2-cleanup.yml)
+   terminates every `Purpose: molecule` instance older than 2 hours once an hour.
+
+The workflow files are the trust anchor: the AWS role trusts the OIDC tokens of
+`Rheinwerk/molecule/.github/workflows/role-ec2.yml@refs/heads/main` and `ec2-cleanup.yml@refs/heads/main`
+(claim `job_workflow_ref`). Keep the file names, and test a branch of this repository with `molecule_ref`: the workflow then still comes from `main`, the
+action and the scenario from the branch.
+
+What the account owner sets up (in the CenterDevice staging account):
+
+- an IAM role with a trust policy on the GitHub OIDC provider for `job_workflow_ref` above and `sub` of the
+  Rheinwerk repositories, allowed to describe images, subnets and instances, to run instances only from the
+  baseimage AMIs into that subnet and security group with `Purpose: molecule` tags, and to terminate only
+  instances tagged that way
+- a subnet with public IPs and no route to internal services, and a security group with SSH in and all out
+
+Local run, with AWS credentials for that account in the environment and `boto3` from
+[requirements/requirements-ec2.txt](requirements/requirements-ec2.txt):
+
+```bash
+make test MOLECULE_SCENARIO=ec2 MOLECULE_DISTRO=debian-13 \
+  MOLECULE_EC2_SUBNET_ID=subnet-... MOLECULE_EC2_SECURITY_GROUP_ID=sg-... MOLECULE_EC2_IMAGE_ENV=staging
+```
+
 # Local runs
 
 [examples/Makefile](examples/Makefile) runs the shared scenario against the role in the current directory
@@ -220,7 +280,8 @@ It needs `molecule` and `molecule-plugins[docker]` in the active virtualenv and 
   [requirements/requirements-molecule.txt](requirements/requirements-molecule.txt), which the action installs.
   Molecule installed the newest version before, and a new molecule-plugins release broke every role run in
   2026 by rejecting a key in the shared `molecule.yml`. The `molecule_version` and `molecule_plugins_version`
-  inputs override the pins for a single run.
+  inputs override the pins for a single run. `boto3` for the ec2 scenario is pinned in
+  [requirements/requirements-ec2.txt](requirements/requirements-ec2.txt).
 - The tools of the lint image are pinned in [dockerfiles/requirements-lint.txt](dockerfiles/requirements-lint.txt).
 - The Ansible collections for the molecule runs and the lint image are pinned in
   [dockerfiles/collections.yml](dockerfiles/collections.yml).

@@ -1,0 +1,31 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    converge_override_file: "{{ lookup('ansible.builtin.first_found', [playbook_dir + '/converge_override.yml'], errors='ignore') or '' }}"
+
+  pre_tasks:
+    - name: Update APT Cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 600
+      register: result
+      until: result is succeeded
+      when: ansible_facts['os_family'] == 'Debian'
+      tags:
+        - molecule-idempotence-notest
+
+    - name: Include converge override tasks
+      ansible.builtin.include_tasks: "{{ converge_override_file }}"
+      when: converge_override_file is defined and converge_override_file != ""
+
+    - name: Print GITHUB_WORKSPACE
+      ansible.builtin.debug:
+        msg: |
+          {{ lookup('env', 'GITHUB_WORKSPACE') }}
+
+  tasks:
+    - name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      ansible.builtin.include_role:
+        name: "{{ lookup('env', 'GITHUB_WORKSPACE') }}"
