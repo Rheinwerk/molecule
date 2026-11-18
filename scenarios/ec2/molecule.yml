@@ -44,11 +44,12 @@ provisioner:
         # ansible_user: "{{ ssh_remote_user | default('root') }}"; the baseimage allows no root login
         ssh_remote_user: ${MOLECULE_EC2_SSH_USER:-cd-admin}
   playbooks:
-    create: ${MOLECULE_PLAYBOOK_CREATE:-create.yml}
+    # fixed: create.yml checks the image secrets before any role code runs
+    create: create.yml
     prepare: ${MOLECULE_PLAYBOOK_PREPARE:-prepare.yml}
     cleanup: ${MOLECULE_PLAYBOOK_CLEANUP:-cleanup.yml}
     converge: ${MOLECULE_PLAYBOOK_CONVERGE:-converge.yml}
-    destroy: ${MOLECULE_PLAYBOOK_DESTROY:-destroy.yml}
+    destroy: destroy.yml
   log: true
   env:
     ANSIBLE_ROLES_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:$MOLECULE_PROJECT_DIRECTORY/roles

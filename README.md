@@ -221,7 +221,9 @@ What a run does:
 2. At boot, before sshd starts, [wipe-image-secrets.sh](scenarios/ec2/files/wipe-image-secrets.sh)
    removes what the image ships for production use: the host keys and host certificates configured in
    sshd (the instance gets fresh host keys), the apt credentials and the apt sources that need them.
-   `prepare.yml` stops the run if any of it is still there. The files are deleted, not overwritten: this
+   The second play of `create.yml` stops the run if any of it is still there, before any role code runs;
+   for this scenario `create.yml`, `destroy.yml`, the user-data template and the wipe script always come from
+   this repository, also when a role ships files of the same name (a role's own `prepare.yml` is kept). The files are deleted, not overwritten: this
    keeps them out of the public CI logs by accident (diff output, verbosity), it does not stop a role that
    reads the deleted blocks from the disk on purpose.
 3. converge, idempotence and verify run as in the docker scenario, over SSH as `cd-admin` with `become`.

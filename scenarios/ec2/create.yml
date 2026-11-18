@@ -118,3 +118,52 @@
       loop: "{{ ec2_instance_config }}"
       loop_control:
         label: "{{ item.instance }}"
+
+    - name: Add the instances for the image check
+      ansible.builtin.add_host:
+        name: "{{ item.instance }}"
+        groups: molecule_ec2_created
+        ansible_host: "{{ item.address }}"
+        ansible_port: "{{ item.port }}"
+        ansible_user: "{{ item.user }}"
+        ansible_ssh_private_key_file: "{{ item.identity_file }}"
+        ansible_ssh_common_args: -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+      loop: "{{ ec2_instance_config }}"
+      loop_control:
+        label: "{{ item.instance }}"
+
+# In create.yml, not prepare.yml: a role may ship its own prepare.yml (role files win over the shared
+# scenario), while create.yml, the user-data template and the wipe script are always the shared ones
+# (action.yml copies them over). molecule destroys the instances when this play fails.
+- name: Check that the image secrets are gone before any role code runs
+  hosts: molecule_ec2_created
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Wait for cloud-init to finish
+      ansible.builtin.command: cloud-init status --wait
+      changed_when: false
+
+    - name: Find apt credentials
+      ansible.builtin.find:
+        paths: /etc/apt/auth.conf.d
+      register: check_apt_auth
+
+    - name: Read the effective sshd configuration
+      ansible.builtin.command: sshd -T
+      changed_when: false
+      register: check_sshd
+
+    - name: Check that the image secrets are gone
+      ansible.builtin.assert:
+        that:
+          - check_apt_auth.files | length == 0
+          - check_sshd_host_keys | reject('match', '/etc/ssh/ssh_host_') | list | length == 0
+          - check_sshd.stdout_lines | select('match', 'hostcertificate ') | list | length == 0
+        fail_msg: >-
+          The boot-time wipe did not run or failed, see /var/log/cloud-init-output.log on the instance.
+          Not converging the role on an image that still holds its secrets.
+        quiet: true
+      vars:
+        check_sshd_host_keys: >-
+          {{ check_sshd.stdout_lines | select('match', 'hostkey ') | map('regex_replace', '^hostkey ', '') | list }}

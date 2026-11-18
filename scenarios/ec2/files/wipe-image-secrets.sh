@@ -7,7 +7,7 @@ set -eu
 # - apt credentials, and the apt sources whose host needs them (apt update would fail on them)
 #
 # The data is only deleted, not overwritten: this protects against leaks by accident, not against
-# a role that recovers deleted blocks on purpose. prepare.yml checks the result.
+# a role that recovers deleted blocks on purpose. The second play of create.yml checks the result.
 
 for conf in /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf; do
   [ -f "$conf" ] || continue
