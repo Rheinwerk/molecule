@@ -4,6 +4,8 @@
 - name: Destroy
   hosts: localhost
   connection: local
+  # the scenario's config defaults to become: the AWS calls must not run under sudo on the runner
+  become: false
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
   tasks:

@@ -35,6 +35,11 @@ provisioner:
       callback_result_format: yaml
     diff:
       always: true
+    # As root on the instance, like the docker scenario: roles' own verify.yml (and prepare.yml) were
+    # written for a root connection, here molecule connects as cd-admin. A config default, so play
+    # keywords win: the localhost plays of create.yml and destroy.yml set become: false.
+    privilege_escalation:
+      become: true
     callback_profile_tasks:
       task_output_limit: all
   inventory:
