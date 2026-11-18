@@ -40,14 +40,24 @@ help:
 	@echo "clean     - remove the synced scenario files from molecule/ (role-owned files stay)"
 
 # Files the role ships in molecule/default/ win over the shared scenario (--ignore-existing), as in CI
+# For ec2 these files always come from the shared scenario, as in CI (action.yml)
+EC2_SHARED_FILES := molecule.yml create.yml destroy.yml templates/user-data.yml.j2 files/wipe-image-secrets.sh
+
 scenario:
 	mkdir -p molecule/default
+	set -e; \
 	if [ -n "$(MOLECULE_DIR)" ]; then \
-	  rsync -a --ignore-existing "$(MOLECULE_DIR)/scenarios/$(MOLECULE_SCENARIO)/" molecule/default/; \
+	  src="$(MOLECULE_DIR)"; tmp=; \
 	else \
-	  tmp=$$(mktemp -d) && git clone -q --depth 1 --branch "$(MOLECULE_REF)" "$(MOLECULE_GIT_REPO)" "$$tmp" \
-	    && rsync -a --ignore-existing "$$tmp/scenarios/$(MOLECULE_SCENARIO)/" molecule/default/ && rm -rf "$$tmp"; \
-	fi
+	  tmp=$$(mktemp -d); git clone -q --depth 1 --branch "$(MOLECULE_REF)" "$(MOLECULE_GIT_REPO)" "$$tmp"; src="$$tmp"; \
+	fi; \
+	rsync -a --ignore-existing "$$src/scenarios/$(MOLECULE_SCENARIO)/" molecule/default/; \
+	if [ "$(MOLECULE_SCENARIO)" = ec2 ]; then \
+	  for f in $(EC2_SHARED_FILES); do \
+	    mkdir -p "molecule/default/$$(dirname "$$f")"; cp "$$src/scenarios/ec2/$$f" "molecule/default/$$f"; \
+	  done; \
+	fi; \
+	if [ -n "$$tmp" ]; then rm -rf "$$tmp"; fi
 
 test: scenario
 	molecule test

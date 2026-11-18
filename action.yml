@@ -107,6 +107,14 @@ runs:
       run: |
         mkdir -p ${GITHUB_WORKSPACE}/molecule/default
         rsync -avzh --ignore-existing --ignore-errors git_molecule/scenarios/$MOLECULE_SCENARIO_NAME/ ${GITHUB_WORKSPACE}/molecule/default/
+        # ec2: the instance lifecycle and the check that the image secrets are gone are not the role's
+        # to replace, these files always come from this repository (examples/Makefile does the same)
+        if [ "$MOLECULE_SCENARIO_NAME" = ec2 ]; then
+          for f in molecule.yml create.yml destroy.yml templates/user-data.yml.j2 files/wipe-image-secrets.sh; do
+            mkdir -p "${GITHUB_WORKSPACE}/molecule/default/$(dirname "$f")"
+            cp "git_molecule/scenarios/ec2/$f" "${GITHUB_WORKSPACE}/molecule/default/$f"
+          done
+        fi
       shell: bash
       env:
         MOLECULE_SCENARIO_NAME: "${{ inputs.molecule_scenario }}"
@@ -146,6 +154,11 @@ runs:
       env:
         MOLECULE_VERSION: "${{ inputs.molecule_version }}"
         MOLECULE_PLUGINS_VERSION: "${{ inputs.molecule_plugins_version }}"
+
+    - name: Install software for the ec2 scenario
+      if: "${{ inputs.molecule_scenario == 'ec2' }}"
+      run: pip install -r git_molecule/requirements/requirements-ec2.txt
+      shell: bash
 
     - name: Pip list
       run: pip list

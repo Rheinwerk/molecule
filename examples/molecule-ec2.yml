@@ -1,0 +1,33 @@
+---
+# Copy to .github/workflows/ci-ec2.yml of a role to run molecule on a real EC2 instance on demand.
+# The AWS side comes from the organisation: secret MOLECULE_EC2_ROLE_ARN, variables
+# MOLECULE_EC2_SUBNET_ID and MOLECULE_EC2_SECURITY_GROUP_ID, see README.md "EC2 scenario".
+name: CI on EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      args:
+        description: Additional arguments passed to molecule test
+        type: string
+        default: ''
+      molecule_ref:
+        description: Ref of Rheinwerk/molecule to take the action and scenario from
+        type: string
+        default: main
+
+jobs:
+  ec2:
+    # the called workflow can only use the permissions granted here
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+    uses: Rheinwerk/molecule/.github/workflows/role-ec2.yml@main
+    with:
+      subnet_id: ${{ vars.MOLECULE_EC2_SUBNET_ID }}
+      security_group_id: ${{ vars.MOLECULE_EC2_SECURITY_GROUP_ID }}
+      args: ${{ inputs.args }}
+      molecule_ref: ${{ inputs.molecule_ref || 'main' }}
+    secrets:
+      MOLECULE_EC2_ROLE_ARN: ${{ secrets.MOLECULE_EC2_ROLE_ARN }}

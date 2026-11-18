@@ -1,0 +1,31 @@
+---
+# Terminates the instances of this scenario by their Name tag, so it also cleans up after a create
+# that failed before it wrote the instance config.
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: "{{ molecule_no_log }}"
+  tasks:
+    - name: Terminate the instances
+      amazon.aws.ec2_instance:
+        region: "{{ item.region }}"
+        state: absent
+        filters:
+          "tag:Name": "{{ item.name }}"
+          "tag:Purpose": molecule
+          instance-state-name:
+            - pending
+            - running
+            - stopping
+            - stopped
+        wait: true
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Empty the instance config
+      ansible.builtin.copy:
+        dest: "{{ molecule_instance_config }}"
+        content: "[]\n"
+        mode: "0600"

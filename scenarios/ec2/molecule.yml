@@ -1,0 +1,57 @@
+---
+# EC2 scenario: one instance per platform from the newest baseimage AMI of the account the AWS
+# credentials belong to, see README.md "EC2 scenario". create.yml starts it, destroy.yml terminates it.
+# The account owner sets up the subnet, the security group and the IAM role beforehand; this scenario
+# creates no security group, key pair or instance profile.
+dependency:
+  name: galaxy
+driver:
+  # create.yml writes the instance config (address, user, key) that the default driver connects with
+  name: default
+  options:
+    managed: true
+platforms:
+  - name: ${CI_HOSTNAME}-${CI_PROJECT_NAME_MOLECULE}-${CI_JOB_ID}
+    # CI_HOSTNAME is MOLECULE_DISTRO without punctuation: debian-13 -> baseimage_debian13-*-amd64
+    image_name: ${MOLECULE_EC2_IMAGE_PREFIX:-baseimage_}${CI_HOSTNAME}-*-${MOLECULE_EC2_ARCH:-amd64}
+    image_env_tag: ${MOLECULE_EC2_IMAGE_ENV}
+    instance_type: ${MOLECULE_EC2_INSTANCE_TYPE:-t3.small}
+    region: ${MOLECULE_EC2_REGION:-eu-central-1}
+    vpc_subnet_id: ${MOLECULE_EC2_SUBNET_ID}
+    security_group_id: ${MOLECULE_EC2_SECURITY_GROUP_ID}
+    assign_public_ip: true
+    ssh_user: ${MOLECULE_EC2_SSH_USER:-cd-admin}
+    # the instance powers itself off (and terminates) after this many minutes if destroy never runs
+    max_lifetime_minutes: 90
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      bin_ansible_callbacks: yes
+      callbacks_enabled: ansible.posix.timer, ansible.posix.profile_tasks
+      display_failed_stderr: true
+      host_key_checking: false
+      remote_tmp: '/tmp/.ansible-${USER}/tmp'
+      callback_result_format: yaml
+    diff:
+      always: true
+    callback_profile_tasks:
+      task_output_limit: all
+  inventory:
+    group_vars:
+      all:
+        # a role's own converge.yml copied from the docker scenario sets
+        # ansible_user: "{{ ssh_remote_user | default('root') }}"; the baseimage allows no root login
+        ssh_remote_user: ${MOLECULE_EC2_SSH_USER:-cd-admin}
+  playbooks:
+    # fixed: create.yml checks the image secrets before any role code runs
+    create: create.yml
+    prepare: ${MOLECULE_PLAYBOOK_PREPARE:-prepare.yml}
+    cleanup: ${MOLECULE_PLAYBOOK_CLEANUP:-cleanup.yml}
+    converge: ${MOLECULE_PLAYBOOK_CONVERGE:-converge.yml}
+    destroy: destroy.yml
+  log: true
+  env:
+    ANSIBLE_ROLES_PATH: ${GITHUB_WORKSPACE}:${HOME}/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:$MOLECULE_PROJECT_DIRECTORY/roles
+verifier:
+  name: ansible

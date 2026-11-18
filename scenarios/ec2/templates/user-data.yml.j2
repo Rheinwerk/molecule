@@ -1,0 +1,11 @@
+#cloud-config
+# Rendered per platform by create.yml (item = the platform from molecule.yml).
+# The default user of the image (cd-admin on the baseimage) gets the key of this run.
+ssh_authorized_keys:
+  - {{ ec2_keypair.public_key }}
+# bootcmd runs in cloud-init's network stage, which is ordered before sshd.service: secrets baked
+# into the image are gone before the first SSH connection, see files/wipe-image-secrets.sh
+bootcmd:
+  - {{ lookup('ansible.builtin.file', 'files/wipe-image-secrets.sh') | to_json }}
+runcmd:
+  - [shutdown, -h, "+{{ item.max_lifetime_minutes }}", "molecule: max lifetime reached"]
